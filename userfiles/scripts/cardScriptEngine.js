@@ -44,6 +44,8 @@
    * Initialise script state (run once at startup)
    */
  Script.on('load', function() {
+    // startup print
+    console.log("Starting card script engine...");
       
      // Sets up the tabs for the dashboard
      Client.setScreenVisible('Image Viewer', false);
