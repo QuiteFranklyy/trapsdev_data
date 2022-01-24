@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Scripting (Sensahub Dashboard Widget)</title>
+    <link rel="preload" href="../fonts/MaterialIcons-Regular.woff2" as="font" crossorigin="anonymous">
+    <style>
+      body {
+        overflow: hidden;
+        font-family: "Open Sans";
+        font-size: 14px;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+
+      @font-face {
+        font-family: "Open Sans";
+        font-style: normal;
+        font-weight: 400;
+        src: local("Open Sans"), local("OpenSans"), url(../fonts/OpenSans400.woff2) format("woff2"), url(../fonts/OpenSans400.woff) format("woff");
+        font-display: block;
+        }
+
+      @font-face {
+        font-family: "Material Icons";
+        font-style: normal;
+        font-weight: 400;
+        src: local("Material Icons"), local("MaterialIcons-Regular"),
+          url(../fonts/MaterialIcons-Regular.woff2) format("woff2"),
+          url(../fonts/MaterialIcons-Regular.woff) format("woff"),
+          url(../fonts/MaterialIcons-Regular.ttf) format("truetype");
+        font-display: block;
+      }
+
+      .material-icons {
+        font-family: "Material Icons";
+        font-weight: normal;
+        font-style: normal;
+        font-size: 24px;
+        /* Preferred icon size */
+        display: inline-block;
+        line-height: 1;
+        text-transform: none;
+        letter-spacing: normal;
+        word-wrap: normal;
+        white-space: nowrap;
+        direction: ltr;
+        /* Support for all WebKit browsers. */
+        -webkit-font-smoothing: antialiased;
+        /* Support for Safari and Chrome. */
+        text-rendering: optimizeLegibility;
+        /* Support for Firefox. */
+        -moz-osx-font-smoothing: grayscale;
+        /* Support for IE. */
+        -moz-font-feature-settings: "liga";
+        -ms-font-feature-settings: "liga";
+        -webkit-font-feature-settings: "liga";
+        font-feature-settings: "liga";
+      }
+
+      #badge {
+        position: absolute;
+        height: 84px;
+        width: 84px;
+        left: 8px;
+        top: 0;
+        border-width: 3px;
+        -ms-border-radius: 45px;
+        border-radius: 45px;
+      }
+
+      #header {
+        position: absolute;
+        top: 6px;
+        width: 83px;
+        font-size: 50px;
+        display: flex;
+        text-align: center;
+        justify-content: center;
+        color: white;
+      }
+
+      .card {
+        box-shadow: none;
+        -ms-transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        -o-transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        -webkit-transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      }
+
+      .card:hover {
+        box-shadow: 0 5px 5px rgba(0, 0, 0, 0.25), 0 2px 2px rgba(0, 0, 0, 0.22);
+      }
+
+      #scriptName {
+        color: black;
+        font-size: 12px;
+        text-align: center;
+      }
+
+      #fileSelect {
+        visibility: hidden;
+      }
+    </style>
+  </head>
+  <body id="body">
+    <input type="file" id="fileSelect" />
+    <div id="group">
+      <div
+        id="widget"
+        style="
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100px;
+          height: 100px;
+          text-align: center;
+          z-index: 100;
+        "
+      >
+        <div id="badge" class="card card-hover">
+          <i id="header" class="material-icons"></i>
+          <div
+            id="scriptName"
+            style="position: absolute; left: 0; top: 84px; width: 100%"
+          >
+            Script
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Import APIs -->
+    
+    
+    <script src="api/Utils.js"></script>
+    <script src="api/Client.js"></script>
+    <script src="api/Devices.js"></script>
+    <script src="api/Database.js"></script>
+    <script src="api/Directory.js"></script>
+    <script src="api/ClientEvents.js"></script>
+    <script src="api/Script.js"></script>
+    <script>
+      "use strict";
+      //#region --- Widget Settings ---
+      var fw = new parent.widgetAPI(window.name);
+      var User;
+      var flowAPI = {};
+      var options = {
+        settings: {
+          category: "widget",
+          type: window.location.pathname
+            .split("/")
+            .slice(-1)[0]
+            .split(".")[0]
+            .replace("%20", " "),
+          iniHeight: parseInt(widget.style.height),
+          iniWidth: parseInt(widget.style.width),
+          author: "Sensavation",
+          version: "200124",
+          tbTooltip: "Javascript scripting",
+          tooltip: "",
+          group: "other",
+          zIndex: "ZINDEX_DEFAULT",
+          disabled: false,
+          visible: false,
+          help: { type: "file", source: "help/widgets/Scripting.md" },
+        },
+        clientEvents: {
+          inputEvents: {
+            "receive value": receiveValue,
+          },
+        },
+        serverEvents: {
+          inputEvents: {
+            feed: {
+              function: fw_feed,
+            },
+            ini: {
+              function: fw_feed,
+            },
+            db: {
+              function: fw_feed,
+            },
+            system: {
+              function: fw_feed,
+            },
+          },
+        },
+        dataTypes: {
+          feed: ["string", "number", "array", "sensacollection", "object"],
+          ini: ["string", "number", "array", "sensacollection", "object"],
+          retValue: ["array"],
+          db: ["string", "number", "array", "sensacollection", "object"],
+          system: ["string", "number", "array", "sensacollection", "object"],
+        },
+        attribs: {
+          "script type": {
+            type: "dropdown",
+            tooltip: "Select the type of script the file is. (.html or .js)",
+            options: "Javascript,HTML",
+            default: "Javascript",
+            group: "Widget Specific",
+          },
+          "import file": {
+            type: "checkbox",
+            tooltip:
+              "Import a file form userfiles/scripts. Using a file will remove the ability to edit though the browser.",
+            default: "false",
+            group: "JS File Settings",
+          },
+          "file name": {
+            type: "input",
+            tooltip: "Script name to import.",
+            default: "",
+            group: "JS File Settings",
+          },
+          "subscribe to directory": {
+            type: "checkbox",
+            tooltip: "Auto subscribe to Directory response channel",
+            default: "false",
+            group: "JS File Settings",
+          },
+          "subscribe to database": {
+            type: "checkbox",
+            tooltip: "Auto subscribe to Database response channel",
+            default: "false",
+            group: "JS File Settings",
+          },
+          "code editor": {
+            type: "code",
+            default:
+              "//# sourceURL=dynamic-script.js\n" +
+              "/**\n * Description: \n" +
+              " * Create Author/Date: \n" +
+              " * Modified Author/Date Date: \n" +
+              " * Version: \n" +
+              " */\n\n" +
+              "/**\n" +
+              " * Initialise script state (run once at startup)\n" +
+              " */\n" +
+              "Script.on('load', function() {\n" +
+              "\n" +
+              "});\n" +
+              "\n",
+            group: "Widget Specific",
+          },
+        },
+      };
+      //#endregion
+
+      //#region --- Declarations ---
+      var flowName = "Scripting";
+      var badgeColor = "#1280B2";
+      var htmlColor = "#E3C107";
+      var fileColor = "#993333";
+      var htmlIcon = "code";
+      var javascriptIcon = "<b>{ }</b>";
+      var badgeBorderColor = "#5E868F";
+      let type = "javascript";
+      let editor;
+      let bids = {};
+      let codeSnippet = "";
+
+      var header = document.getElementById("header");
+      var badge = document.getElementById("badge");
+      badge.style.backgroundColor = badgeColor;
+      badge.style.borderColor = badgeBorderColor;
+      header.innerHTML = javascriptIcon;
+
+      //#endregion
+      //#region --- Event functions ---
+      // function to receive data from a local channel/scope
+      function receiveValue(eventData, channel) {
+        try {
+          if (clientEvent) {
+            let parent = null;
+            let window = null;
+            clientEvent(eventData, channel);
+          }
+        } catch (err) {
+          if (fw.func("CHECKSYSPRIVS", "DESIGN")) {
+            let stack = err.stack.split("\n");
+            Log.warn(
+              "Scripting error processing client events in '" +
+                fw.widgetName +
+                "'. Error: " +
+                stack[0] +
+                " " +
+                stack[1],
+              "ADMIN"
+            );
+          } else {
+            Log.warn(
+              "An error was found executing code from a client event in '" +
+                fw.widgetName +
+                "'. Error: " +
+                err,
+              "ADMIN"
+            );
+          }
+          Log.error(
+            "Scripting EVAL error from the client channel in '" +
+              fw.widgetName +
+              "': " +
+              err.stack,
+            "ADMIN"
+          );
+        }
+        return true;
+      }
+
+      //#endregion
+
+      //#region --- Widget API functions ---
+
+      // API startup actions for dashboard, initialises widget. Return "OK" if startup OK else return an error string. Don't delete
+      function fw_dashStart(mode) {
+        Script.API = fw.func;
+ 
+        // Check if CM is loaded in.
+        type = fw.attribs("script type").toLowerCase();
+
+        if (fw.state !== "DASHBOARD") {
+          fw.widgetID.style.setProperty("display", "block");
+
+          if (fw.attribs("import file") !== "true") {
+            codeSnippet = fw.attribs("code editor");
+          }
+
+          if (type === "html") {
+            type = "htmlmixed";
+            badge.style.setProperty("background-color", htmlColor);
+            header.innerHTML = htmlIcon;
+            header.style.setProperty("top", "18px");
+          } else {
+            type = "javascript";
+            badge.style.setProperty("background-color", badgeColor);
+            header.innerHTML = javascriptIcon;
+            header.style.setProperty("top", "6px");
+          }
+
+          if (fw.attribs("import file") == "true") {
+            badge.style.setProperty("background-color", fileColor);
+          }
+        } else {
+          fw.widgetID.style.setProperty("display", "none");
+        }
+        // Set script name
+        document.getElementById("scriptName").innerHTML = fw.widgetName;
+
+        let details = fw.func("getuserobj");
+        details.accountid = "" + details.accountid;
+        User = details;
+        return "OK";
+      }
+
+      /**
+       * API - Run after all widgets are loaded and ready on the screen.
+       */
+      function fw_screenLoaded(mode) {
+        if (fw.state !== "DASHBOARD") {
+          //fw.func("loadCM", "<b>Code Editor</b> - Scripts ( " + type + " )");
+        }
+        
+        if (fw.attribs("import file") !== "true") {
+          codeSnippet = fw.attribs("code editor");
+        }
+
+        if (scriptName !== "" && type !== "javascript") {
+          return;
+        }
+
+        if (mode === "DASHBOARD") {
+          // Auto subscribe
+          if (codeSnippet.indexOf("Directory.") !== -1) {
+            let channel = {
+              category: "$DIR",
+              className: "ADMIN",
+              instance: "MANAGE",
+              scope: "RESPONSE",
+            };
+
+            Script.subscribeToChannel("directory", channel, feedWrapper);
+            Log.verbose("Subscribing to Directory response channel.");
+
+            channel = {
+              category: "$DB",
+              className: "ADMIN",
+              instance: "MANAGE",
+              scope: "RESPONSE",
+            };
+            Script.subscribeToChannel("database", channel, feedWrapper);
+            Log.verbose("Subscribing to Database response channel.");
+          }
+
+          if (
+            codeSnippet.indexOf("Database.") !== -1 &&
+            codeSnippet.indexOf("Directory.") === -1
+          ) {
+            let channel = {
+              category: "$DB",
+              className: "ADMIN",
+              instance: "MANAGE",
+              scope: "RESPONSE",
+            };
+            Script.subscribeToChannel("database", channel, feedWrapper);
+            Log.verbose("Subscribing to Database response channel.");
+          }
+
+          if (fw.attribs("subscribe to directory") == "true") {
+            let channel = {
+              category: "$DIR",
+              className: "ADMIN",
+              instance: "MANAGE",
+              scope: "RESPONSE",
+            };
+            Script.subscribeToChannel("directory", channel, feedWrapper);
+            Log.verbose("Subscribing to Directory response channel.");
+
+            channel = {
+              category: "$DB",
+              className: "ADMIN",
+              instance: "MANAGE",
+              scope: "RESPONSE",
+            };
+            Script.subscribeToChannel("database", channel, feedWrapper);
+            Log.verbose("Subscribing to Database response channel.");
+          } else if (fw.attribs("subscribe to database") === "true") {
+            let channel = {
+              category: "$DB",
+              className: "ADMIN",
+              instance: "MANAGE",
+              scope: "RESPONSE",
+            };
+            Script.subscribeToChannel("database", channel, feedWrapper);
+            Log.verbose("Subscribing to Database response channel.");
+          }
+
+          if (fw.attribs("script type").toUpperCase().trim() !== "JAVASCRIPT")
+            return;
+
+          try {
+            if (fw.attribs("import file") !== "true") {
+              eval(codeSnippet);
+            }
+            if (ini) {
+              let parent = null;
+              let window = null;
+              fw.func("SCRIPTINI", ini);
+            }
+
+            if (loaded) {
+              let parent = null; // Stop access to framework outside the script.api
+              let window = null;
+              //let console = null;
+              loaded();
+            }
+          } catch (err) {
+            if (fw.func("CHECKSYSPRIVS", "DESIGN")) {
+              let stack = err.stack.split("\n");
+              Log.warn(
+                "Scripting error during initialisation in '" +
+                  fw.widgetName +
+                  "'.",
+                "ADMIN"
+              );
+              Log.verbose(
+                "Scripting error during initialisation in '" +
+                  fw.widgetName +
+                  "'." +
+                  err +
+                  " Stack: " +
+                  stack,
+                "ADMIN"
+              );
+            } else {
+              Log.warn(
+                "An error was found executing code during initialisation of script '" +
+                  fw.widgetName +
+                  "'.",
+                "ADMIN"
+              );
+              Log.verbose(
+                "An error was found executing code during initialisation of script '" +
+                  fw.widgetName +
+                  "'. Error: " +
+                  err,
+                "ADMIN"
+              );
+            }
+            Log.error(
+              "Scripting EVAL error in the initialisation code in '" +
+                fw.widgetName +
+                "'.",
+              "ADMIN"
+            );
+            Log.verbose(
+              "Scripting EVAL error in the initialisation code in '" +
+                fw.widgetName +
+                "': " +
+                err.stack,
+              "ADMIN"
+            );
+          }
+        }
+      }
+
+      function fw_modalCallback(param1, param2, param3) {
+        if (typeof param2.ctid === "string" && ctidCallbacks[param2.ctid]) {
+          try {
+            let parent = null;
+            let window = null;
+            ctidCallbacks[param2.ctid](param1, param3);
+          } catch (error) {
+            Log.warn(
+              "Error in script callback with ctid of: " +
+                param2.ctid +
+                ", Error: " +
+                error.stack,
+              "ADMIN"
+            );
+          }
+
+          delete ctidCallbacks[param2.ctid];
+        }
+      }
+
+      // Script may want to handle keypresses
+      function fw_keyPress(keycode) {
+        if (keypressFunc) {
+          let parent = null;
+          let window = null;
+          //let console = null;
+          keypressFunc(keycode);
+        }
+      }
+
+      // API startup actions for toolbox. Return "OK" if startup OK else return an error string
+      function fw_toolStart(mode) {
+        document
+          .getElementById("scriptName")
+          .style.setProperty("display", "none");
+        fw.widgetID.style.setProperty("display", "block");
+
+        // Preload the codemirror incase it is selected.
+        if (fw.state !== "DASHBOARD") {
+          //fw.func("loadCM", "<b>Code Editor</b> - Scripts ( " + type + " )");
+        }
+
+        return "OK";
+      }
+
+      // API startup actions when first created by dropping in design mode. Return "OK" if startup OK else return an error string
+      function fw_newWidget(mode) {
+        return fw_dashStart();
+      }
+
+      // API called when switching to design mode (optional, delete if not using)
+      function fw_startDesign() {
+        options.settings.visible = true;
+        return true;
+      }
+
+      // API called to manage scaling
+      function fw_scale(scaleX, scaleY) {
+        return true;
+      }
+
+      // API called when widget edit starts (return false to stop editor, "NOSCALE", "NOVERT", "NOHORIZ", "NOVERT,NOHORIZ" to customise scaling)
+      async function fw_startEdit() {
+        fw.func("SETATTRIB", "code editor", codeSnippet);
+        editor = await fw.func("GETEDITOR");
+        editor.setOption("mode", type);
+        if (document.querySelector("#customScript") != null) {
+          // Set to read only mode if loaded from file
+          editor.setOption("readOnly", true);
+          fw.status({
+            message: "Script is read only",
+            important: true
+          });
+        } else {
+          editor.setOption("readOnly", false);
+          fw.status({
+            message: "Script is editable",
+            important: true
+          });
+        }
+
+        let linePos = localStorage.getItem("scriptpos_" + fw.widgetName);
+        if (linePos) {
+          // restore to last place
+          setTimeout(function () {
+            editor.scrollTo(null, linePos);
+          }, 0);
+        }
+        return "NOSCALE";
+      }
+
+      // API called when widget edit finishes (apply edit changes here)
+      function fw_endEdit(mode) {
+        if (fw.attribs("import file") == "true") {
+          fw.func("SETATTRIB", "code editor", "");
+        }
+
+        if (
+          fw.attribs("import file") == "true" &&
+          fw.attribs("script type").toLowerCase() != "javascript"
+        ) {
+          alert(
+            "You can not import file option only works for javacript files."
+          );
+          return false;
+        } else if (
+          fw.attribs("import file") == "true" &&
+          fw.attribs("script type").toLowerCase() === "javascript"
+        ) {
+          // Check if script exists before saving otherwise alert
+          let fileName = fw.attribs("file name");
+          let url = `/userfiles/scripts/${fileName}`;
+          fetch(url).then((response) => {
+            if (!response.ok) {
+              
+              alert(`Failed to load script. Response: ${response.statusText}`);
+              fw.func("SETATTRIB", "import file", "false");
+            }
+          });
+
+        }
+
+        localStorage.setItem(
+          "scriptpos_" + fw.widgetName,
+          editor.getScrollInfo().top
+        );
+
+        // Make code editor editable
+        editor.setOption("readOnly", false);
+
+        fw_dashStart();
+        return true;
+      }
+
+      //TODO: Is this used now??
+      function fw_db(channel, scope, data) {
+        try {
+          if (db) {
+            let window = null;
+            let parent = null;
+            let console = null;
+            db(eventData);
+          }
+        } catch (err) {
+          Log.warn(
+            "An error was found executing code from the database channel in '" +
+              fw.widgetName +
+              "'. Check Script.on('database'... Error: " +
+              err
+          );
+          Log.error(
+            "Scripting EVAL error from the database channel in '" +
+              fw.widgetName +
+              "': " +
+              err.stack
+          );
+        }
+      }
+
+      // Used for auto subscribing to the database and directory channel.
+      function feedWrapper(data, channel) {
+        fw_feed(channel, null, data);
+      }
+
+      // API called for incoming channel events
+      function fw_feed(channel, client, data) {
+        try {
+          if (
+            data.sysmeta.label === "sensacollection" &&
+            typeof data.value.pk !== "undefined"
+          ) {
+            data.value = SensaCollection.load(data.value);
+          } else if (data.sysmeta.label === "object") {
+            data.value = JSON.parse(data.value);
+          }
+
+          // Check if scriptData is defined. Disable global objects to remove script access to framework
+          if (typeof data.sysmeta.ctid === "string" && ctidCallbacks[data.sysmeta.ctid]) {
+              try {
+                let parent = null;
+                let window = null;
+                ctidCallbacks[data.sysmeta.ctid](data,ctidParams[data.sysmeta.ctid]);
+              } catch (error) {
+                Log.warn(
+                  "Error in script callback with ctid of: " +
+                    data.sysmeta.ctid +
+                    ", Error: " +
+                    error.stack
+                );
+              }
+
+              delete ctidCallbacks[data.sysmeta.ctid];
+              delete ctidParams[data.sysmeta.ctid];
+          } else if (
+            typeof data.sysmeta.ctid === "string" &&
+            bids[data.sysmeta.ctid]
+          ) {
+            // Broadcast ID found in script -> drop
+            // Drop message
+            delete bids[data.sysmeta.citd];
+            return true;
+          } else if (serverEvent) {
+            let parent = null;
+            let window = null;
+            serverEvent(data, channel);
+          } else {
+            Log.warn(
+              fw.widgetName +
+                " received a server event but did not have a function registered. You may have accidentally subscribed to a channel that is not required by this widget."
+            );
+          }
+        } catch (err) {
+          if (fw.func("CHECKSYSPRIVS", "DESIGN")) {
+            let stack = err.stack.split("\n");
+            Log.warn(
+              "Scripting error with processing event in '" +
+                fw.widgetName +
+                "'. " +
+                stack[0] +
+                " " +
+                stack[1],
+              "ALL"
+            );
+          } else {
+            Log.warn(
+              "An error was found running an event script '" +
+                fw.widgetName +
+                "'. Error: " +
+                err,
+              "ALL"
+            );
+          }
+          Log.error(
+            "Scripting EVAL error with an event for '" +
+              fw.widgetName +
+              "': " +
+              err.stack
+          );
+        }
+        return true;
+      }
+
+      function loadScriptFile() {
+        // Import script by name
+        let fileName = fw.attribs("file name");
+        let type = fw.attribs("script type").toLowerCase();
+        let mode = fw.attribs("import file");
+
+        if (typeof fileName === "" || mode === "false" || type === "html") {
+          fw.ready();
+          return;
+        }
+
+        if (fileName !== "" && type == "javascript") {
+          let url = `/userfiles/scripts/${fileName}`;
+
+          let scriptElem = document.createElement("script");
+          scriptElem.setAttribute("src", url);
+          scriptElem.setAttribute("type", "text/javascript");
+          scriptElem.setAttribute("id", "customScript");
+          scriptElem.addEventListener("load", scriptReady);
+          scriptElem.addEventListener("error", failedImport);
+          document.getElementById("body").appendChild(scriptElem);
+        }
+      }
+
+      function scriptReady(event) {
+        if (fw.state === "DESIGN" && fw.attribs("import file") == "true") {
+          // Fetch script.
+          let fileName = fw.attribs("file name");
+          let url = `/userfiles/scripts/${fileName}`;
+          fetch(url)
+            .then(handleErrors)
+            .then((response) => response.text())
+            .then((response) => {
+              fw.func("SETATTRIB", "code editor", response);
+              codeSnippet = response;
+              fw.ready();
+            });
+        } else {
+          fw.ready();
+        }
+      }
+
+      /**
+       * Throws error if the file cannot me successfully imported into the <script> tag.
+       */
+      function failedImport(event) {
+        console.log("Failed to import script.");
+        fw.ready(`Failed to load file '${fw.attribs("file name")}'`);
+      }
+
+      /**
+       * Handles response from fetch when retreiving file text for displaying in code mirror.
+       */
+      function handleErrors(response) {
+        if (!response.ok) {
+          fw.ready(`Failed to load script. Response: ${response.statusText}`);
+        }
+        return response;
+      }
+
+      /**
+       * Returns the content of the editor if it not using a file. Used for Script api.
+       */
+      function returnScript() {
+        return fw.attribs("code editor");
+      }
+
+      // Initialize widget framework API - DO NOT ADJUST OR DELETE
+
+      // widget framework object
+      if (fw.state !== "TOOLBOX") {
+        loadScriptFile();
+      } else {
+        fw.ready();
+      }
+    </script>
+    <!--<script src="/userfiles/scripts/test.js"></script> -->
+  </body>
+</html>

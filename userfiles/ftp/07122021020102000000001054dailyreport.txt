@@ -1,0 +1,9 @@
+IMEI:866758044388722
+CSQ:26
+CamID:000000001054
+Temp:28 Celsius Degree
+Date:07/12/2021  02:00:59
+Battery:30%
+SD:3784M/15099M
+Total Pics:3801
+Send times:117

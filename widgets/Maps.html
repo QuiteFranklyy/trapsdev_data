@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head id="head">
+    <title>Maps (Sensahub Dashboard Widget)</title>
+    <meta charset="utf-8">
+    <style>
+        body {
+            overflow: hidden;
+            font-family: "Open Sans";
+            font-size: 16px;
+            user-select: none;
+        }
+
+        @font-face {
+            font-family: "Open Sans";
+            font-style: normal;
+            font-weight: 400;
+            src: local("Open Sans"), local("OpenSans"), url(../fonts/OpenSans400.woff2) format("woff2"), url(../fonts/OpenSans400.woff) format("woff");
+            font-display: block;
+        }
+
+        .content {
+            border: black;
+            border-width: thick;
+        }
+
+        /* The popup bubble styling. */
+        .popup-bubble {
+            /* Position the bubble centred-above its parent. */
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform: translate(-10%, -100%);
+            /* Style the bubble. */
+            /* background-color: white; */
+            /* padding: 5px; */
+            border-radius: 5px;
+            font-family: sans-serif;
+            overflow-y: auto;
+            /* max-height: 60px; */
+            /* box-shadow: 0px 2px 10px 1px rgba(0,0,0,0.5); */
+        }
+        /* The parent of the bubble. A zero-height div at the top of the tip. */
+        .popup-bubble-anchor {
+            /* Position the div a fixed distance above the tip. */
+            position: absolute;
+            width: 100%;
+            /* bottom: /* TIP_HEIGHT= 8px; */
+            left: 0;
+            background-color: black;
+        }
+            /* This element draws the tip. */
+            .popup-bubble-anchor::after {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                /* Center the tip horizontally. */
+                transform: translate(-50%, 0);
+                /* The tip is a https://css-tricks.com/snippets/css/css-triangle/ */
+                width: 0;
+                height: 0;
+                /* The tip is 8px high, and 12px wide. */
+                border-left: 6px solid transparent;
+                border-right: 6px solid transparent;
+                border-top: /* TIP_HEIGHT= */ 8px solid black;
+            }
+        /* JavaScript will position this div at the bottom of the popup tip. */
+        .popup-container {
+            cursor: auto;
+            height: 0;
+            position: absolute;
+            /* The max width of the info window. */
+            min-width: 200px;
+        }
+
+        .hidden {
+            visibility: hidden;
+            display: none;
+        }
+    </style>
+
+</head>
+<body id="body">
+    <div id="group">
+        <div id="widget" style="width: 500px; height: 500px; position: absolute; left: 0px; top: 0px; z-index:4;"></div>
+        <img alt="Map" id="imageIcon" src="data:image/png;base64,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" width="100" height="100" />
+    </div>
+    
+    <!-- This is the google maps library for clustering markers -->
+    <!--<script src="https://unpkg.com/@google/markerclustererplus@4.0.1/dist/markerclustererplus.min.js"></script>-->
+    <script>
+        "use strict";
+
+        // Initialize widget framework API - DO NOT ADJUST OR DELETE
+        var fw;
+        fw = new parent.widgetAPI(window.name);  
+
+        //#region --- Widget Settings ---
+        // var widget = document.getElementById("widget");
+        var options = {
+            settings: {
+                "category": "widget",
+                "type": window.location.pathname.split("/").slice(-1)[0].split(".")[0].replace("%20", " "),
+                "iniHeight": parseInt(widget.style.height),
+                "iniWidth": parseInt(widget.style.width),
+                "author": "Sensavation",
+                "tbTooltip": "Google Maps",
+                "tooltip": "",
+                "version": "190104",
+                "group": "visualisation",
+                "zIndex": "ZINDEX_DEFAULT",
+                "disabled": false,
+                "scaling": true,
+                "help": { "type": "file", "source": "help/widgets/Maps.md" }
+            },
+            clientEvents: {
+                inputEvents: {
+                    "receive value": client_feed,
+                    "add custom popup": customPop,
+                    "remove custom popup": removePop,
+                    "set map": setMap,
+                    "set zoom": setZoom,
+                    "clear map": clearMap,
+                    "open window": openMarkerInfoWindow,
+                    "draw line": drawLine,
+                    "remove line": removeLine,
+                 },
+                outputEvents: [
+                    "pressed",
+                    "custom popup pressed",
+                    "custom"
+                ]
+            },
+            serverEvents: {
+                inputEvents: {
+                    "feed": {
+                        "function": fw_feed
+                    },
+                    "ini": {
+                        "function": fw_feed
+                    }
+                },
+                outputEvents: [
+                    "pressed",
+                    "custom"
+                ]
+            },
+            dataTypes: {
+                "feed": ["string", "number", "array"],
+                "ini": ["string", "number"],
+                "retValue": ["array"]
+            },
+            attribs: {
+                "api key": {
+                    "type": "input",
+                    "tooltip": "Registered Google Maps API key.",
+                    "default": "",
+                    "group": "Widget Specific"
+                },
+                "Coop. Scrolling": {
+                    "type": "checkbox",
+                    "default": "true",
+                    "group": "Widget Specific",
+                    "tooltip": "The user needs to hold down the ctrl key to zoom in and out of the map with the mouse."
+                },
+                "zoom control": {
+                    "type": "checkbox",
+                    "default": "true",
+                    "group": "Widget Specific",
+                    "tooltip": "Allow the user to zoom on the map."
+                },
+                "map type control": {
+                    "type": "checkbox",
+                    "default": "true",
+                    "group": "Widget Specific",
+                    "tooltip": "Allow the user to enter Google Map's street view."
+                },
+                "scale control": {
+                    "type": "checkbox",
+                    "default": "true",
+                    "group": "Widget Specific",
+                    "tooltip": "Allow the user to enter Google Map's street view."
+                },
+                "rotate control": {
+                    "type": "checkbox",
+                    "default": "true",
+                    "group": "Widget Specific",
+                    "tooltip": "Allow the user to enter Google Map's street view."
+                },
+                "street view control": {
+                    "type": "checkbox",
+                    "default": "true",
+                    "group": "Widget Specific",
+                    "tooltip": "Allow the user to enter Google Map's street view."
+                },
+                "fullscreen control": {
+                    "type": "checkbox",
+                    "default": "true",
+                    "group": "Widget Specific",
+                    "tooltip": "Allow the user to enter full screen."
+                },
+                "latitude": {
+                    "type": "input",
+                    "tooltip": "Latitude to center map on.",
+                    "default": "-25.363",
+                    "group": "Widget Specific"
+                },
+                "longitude": {
+                    "type": "input",
+                    "tooltip": "Longitude to center map on.",
+                    "default": "131.044",
+                    "group": "Widget Specific"
+                },
+                "zoom": {
+                    "type": "input",
+                    "tooltip": "Map zoom level",
+                    "default": "4",
+                    "group": "Widget Specific"
+                },
+                "type": {
+                    "type": "dropdown",
+                    "options": "roadmap, satellite, hybrid, terrain",
+                    "default": "terrain",
+                    "group": "Widget Specific"
+                },
+                "display POIs": {
+                    "type": "checkbox",
+                    "default": "false",
+                    "group": "Widget Specific",
+                    "tooltip": "Toggle whether default points of interest are displayed on the map."
+                },
+                "display info on": {
+                    "type": "dropdown",
+                    "options": "mouseover, click",
+                    "default": "mouseover",
+                    "group": "Widget Specific"
+                },
+                "popup": {
+                    "type": "data",
+                    "default": "",
+                    "group": "Widget Specific"
+                },
+                "history (hrs)": {
+                    "type": "input",
+                    "tooltip": "Amount of history (in hours) to retrieve.",
+                    "default": "0",
+                    "group": "Widget Specific"
+                },
+                "clustering size": {
+                    "type": "input",
+                    "tooltip": "change clustering threshold.",
+                    "default": "40",
+                    "group": "Widget Specific"
+                },
+                "clustering toggle": {
+                    "type": "checkbox",
+                    "default": "true",
+                    "group": "Widget Specific",
+                    "tooltip": "Toggle whether default are clustered."
+                },
+                
+            }
+        };
+        //#endregion
+
+        var head = document.getElementsByTagName('head')[0];    // We refference the document head to load/offload the clusting library in case its disabled.
+        var script;                                             //Use this refference object to dynamically create the script in case we want to ofload the clusting object
+        var map;
+        var clusters;
+        var path;                                               //TODO: Should be an array so multiple paths can be displayed.
+        var infowindow;
+        var backlog = [];
+        var loaded = false;
+        var markers = {};
+        var markersInfo = {};
+        var markerWindows = {};
+        var openInfoWindow;
+        var geocoder;
+        var clusteringEnabled = false;
+
+        var collection = null;
+        var pinIcon = "/images/logolighttrans.png";
+        var mapFocus;
+        // TODO: Add as a attrib setting
+
+        // Dictionary mapping point id to Google Map feature.
+        var importedFeaturesDict = {};
+
+        var gLong = 115.857048;
+        //TODO: Pull this out.
+        var gLat = -31.953512;
+        var gZoom = 4;
+        var imgIcon = document.getElementById('imageIcon');
+        var outputScope;
+
+        // only one line can be drawn at a time
+        var linePath;
+
+        
+        if (fw.state !== "TOOLBOX") {
+            checkClustering();          
+            imgIcon.style.display = "none";
+            var url = "https://maps.googleapis.com/maps/api/js?key=" + fw.attribs("api key") + "&callback=initMap"
+            var script = document.createElement('script');
+            script.type = "text/javascript";
+            script.src = url;
+            document.body.appendChild(script);
+        } else {
+            fw.ready();
+        }
+
+        //#region --- Widget specific functions ---
+
+
+        /**
+         * draws a line between two points, can be upgraded to draw a line between multiple points
+         * data comes in the form of a JSON, contains an array of latitudes and longitudes sent as:
+         * {"coords":[{"lat":-27.524667,"lng":152.96996567},{"lat":-27.534667,"lng":152.96896567},{"lat":-27.535667,"lng":152.96796567}], "color": "#ff0000", "opacity": 1, "weight":2}
+         * this draws a line between 3 points. The line is red, opacity is 1, and weight is 2
+         * Can be sent as a raw JSON or as a stringified JSON
+         * @param eventData expects an object for eventData.value containing .lng and .lat.
+         */
+        function drawLine(eventData) {
+
+
+            if (map === undefined) {
+                params.push([eventData]);
+                popupBackup.push(drawLine);
+                return;
+            }
+
+            var incomingData;
+            if (typeof eventData.value === "string") {
+                incomingData = JSON.parse(eventData.value);
+            } else {
+                incomingData = eventData.value;
+            }
+
+            if (typeof incomingData.color !== "string") {
+                throw new TypeError("Color must be a string. Found type '" + typeof incomingData.color + "'.");
+            }
+
+            if (typeof incomingData.weight !== "number" ||
+                typeof incomingData.opacity !== "number") {
+                throw new TypeError("Weight and opacity must be a number. Found weight type: '" + typeof incomingData.weight + "' and opacity type: '" + typeof incomingData.opacity + "'.");
+            }
+
+            if (typeof incomingData.coords[0].lat !== "number" ||
+                typeof incomingData.coords[0].lng !== "number") {
+                throw new TypeError("Latitude and longitude must be a number. Found latitude type: '" + typeof incomingData.coords[0].lat + "' and longitude type: '" + typeof incomingData.coords[0].lng + "'.");
+            }
+
+
+
+            var lineCoordinates = [];
+            for (var i in incomingData.coords) {
+                lineCoordinates.push(incomingData.coords[i]);
+            }
+            linePath = new google.maps.Polyline({
+                path: lineCoordinates,
+                geodesic: true,
+                strokeColor: incomingData.color,
+                strokeOpacity: incomingData.opacity,
+                strokeWeight: incomingData.weight,
+            });
+            linePath.setMap(map);
+        }
+
+        function removeLine(eventData) {
+            if (map === undefined) {
+                params.push([eventData]);
+                popupBackup.push(removeLine);
+                return;
+            }
+            linePath.setMap(null);
+        }
+
+        function fullScreen(width, height) {
+            fw.func("setPosition", 0, 0);
+            fw.func("setWidth", "100%");
+            fw.func("setHeight", "100%");
+            // Use width and height here.
+            var dashboardWidth = document.body.offsetWidth;
+            var dashboardHeight = parent.innerHeight;
+            fw_scale(dashboardWidth / options.settings.iniWidth, dashboardHeight / options.settings.iniHeight);
+        }
+
+        function setZoom(eventData) {
+            if (map === undefined) {
+                params.push([eventData]);
+                popupBackup.push(setMap);
+                return;
+            }
+
+            var zoom = parseInt(eventData.value);
+            if (isNaN(zoom)) {
+                throw new TypeError("Unable to parse '" + eventData.value + "' to Integer.");
+            }
+
+            map.setZoom(zoom);
+        }
+
+        /**
+         *  Sets the center of the map.
+         *
+         * @param eventData expects an object for eventData.value containing .lng and .lat.
+         */
+        function setMap(eventData) {
+            // Check that the map is ready to be used.
+            if (map === undefined) {
+                params.push([eventData]);
+                popupBackup.push(setMap);
+                return;
+            }
+
+            var loc = eventData.value;
+            // Check inputs
+            if (!isValidCoordinates(loc)) {
+                return;
+            }
+
+            map.setCenter(loc);
+        }
+
+
+
+        /**
+         * Checks if the coordinates given are valid.
+         *
+         * @param {object} pos - Object containing .lng and .lat values as a number.
+         */
+        function isValidCoordinates(pos) {
+            if (typeof pos !== "object") {
+                console.error("Coordinates must be an object containing .lng and .lat. Found '" + typeof pos + "' instead.");
+                return false;
+            }
+
+            if (pos.lng === undefined) {
+                console.error("Lng cannot be undefined.");
+                return false;
+            }
+
+
+            if (pos.lat === undefined) {
+                console.error("Lat cannot be undefined.");
+                return false;
+            }
+
+            if (typeof pos.lat !== "number") {
+                console.error("Lat must be of type 'number'. Found '" + typeof pos.lat + "'.");
+                return false;
+            }
+
+            if (typeof pos.lng !== "number") {
+                console.error("Lng must be of type 'number'. Found '" + typeof pos.lng + "'.");
+                return false;
+            }
+
+            if (isNaN(pos.lng)) {
+                console.error("Lng must be of type 'number'. Found NaN instead.");
+                return false;
+            }
+
+            if (isNaN(pos.lat)) {
+                console.error("Lat must be of type 'number'. Found NaN instead.");
+                return false;
+            }
+
+            return true;
+
+        }
+
+
+
+        /**
+         *  Resets the map to have no pins
+         *
+         * @param event
+         */
+        function clearMap(event) {
+
+            // Check if google has loaded.
+            if (typeof google === "undefined") {
+                params.push([event]);
+                popupBackup.push(clearMap);
+                return;
+            }
+
+            initMap();
+        }
+
+
+        /**
+         * Add a custom popup to the
+         *
+         * @param eventData
+         */
+        function customPop(eventData) {
+            debugger;
+            // Check if google has loaded.
+            if (typeof google === "undefined") {
+                params.push([eventData]);
+                popupBackup.push(customPop);
+                return;
+            }
+
+            if (typeof eventData.value !== "object") {
+                throw new TypeError("Invalid packet structure. Custom Popup requires an object, found '" + typeof eventData.value + "'");
+            }
+
+            if (typeof eventData.value.id !== "string") {
+                throw new TypeError("Expected a string for id, found '" + typeof id + "'");
+            }
+
+            if (typeof eventData.value.loc !== "object") {
+                throw new TypeError("Expected an object for loc but found '" + typeof eventData.value.loc + "'");
+            }
+
+            if (typeof eventData.value.content === "undefined") {
+                throw new TypeError("Expected an Element but found nothing.");
+            }
+
+            addCustomPopup(eventData.value.id, eventData.value.loc, eventData.value.content);
+        }
+
+
+        /**
+         * Remove custom popup
+         * @param eventData
+         */
+        function removePop(eventData) {
+
+            // Check if google has loaded.
+            if (typeof google === "undefined") {
+                params.push([eventData]);
+                popupBackup.push(removePop);
+                return;
+            }
+
+            if (typeof eventData !== "object") {
+                throw new TypeError("Expected an event object but found '" + typeof eventData + "'");
+            }
+
+            if (typeof eventData.value === "undefined") {
+                throw new TypeError("Expected an event object but could not find the value. Found '" + typeof eventData.value + "'");
+            }
+
+            removeCustomPopup(eventData.value);
+        }
+
+
+        /**
+         * Unloads backup popups that were loaded before the map was ready.
+         * */
+        function unloadCustomPopups() {
+            while (popupBackup.length > 0) {
+                var fun = popupBackup.shift();
+                var param = params.shift();
+                fun.apply(this, param);
+                //addCustomPopup(packet.id, packet.location, packet.innerContent);
+            }
+        }
+
+        /**
+         * Add a custom popup to the map
+         *
+         * @param location Object wit lat and lng keys for the position that we would like the map to be located.
+         * @param innerContent HTML element that you would like to put inside the element!
+         */
+        var popupBackup = [];
+        var params = [];
+        var customPopList = {};
+        function addCustomPopup(id, location, innerContent) {
+
+            // Check if google has loaded.
+            if (typeof google === "undefined") {
+                //var packet = {};
+                //packet.id = id;
+                //packet.location = location;
+                //packet.innerContent = innerContent;
+                params.push([id, location, innerContent]);
+                popupBackup.push(addCustomPopup);
+
+                return;
+            }
+
+            var lat = location.lat;
+            var lng = location.lng;
+            var content = document.createElement("div");
+            content.appendChild(innerContent);
+            content.classList.add("content");
+             
+            if (customPopList[id]) {
+                customPopList[id].setMap(null);
+            }
+
+            var Popup, popup;
+            Popup = createPopupClass();
+            popup = new Popup(
+                new google.maps.LatLng(lat, lng),
+                content);
+            popup.setMap(map);
+            customPopList[id] = popup;
+
+            if (clusteringEnabled) {
+                // Get list of markers inside the MarkerClusterer Object
+                var _markers = clusters.getMarkers();
+                // Return array of labels from array of markers
+                var _labels = _markers.map(function (item) {
+                    return item.label;
+                });
+                // Check if ID already exists in array of markers.
+                var _index = _labels.indexOf(id);
+                if (_index !== -1) {
+                    //Remove if exists
+                    clusters.removeMarker(_markers[_index]);
+                }
+                // Add in new marker with lat, lng and id
+                clusters.addMarker(new google.maps.Marker({ position: { lat: lat, lng: lng }, label: id }));
+            }
+            else {
+               new  google.maps.Marker({ position: { lat: lat, lng: lng }, label: id });
+            }
+            
+        }
+
+    
+
+        /**
+         * Removes a popup with the given id
+         *
+         * @param id of pin
+         */
+        function removeCustomPopup(id) {
+            if (customPopList[id]) {
+                customPopList[id].setMap(null);
+            }
+
+            if (clusteringEnabled) {
+                // Get list of markers inside the MarkerClusterer Object
+                var _markers = clusters.getMarkers();
+                // Return array of labels from array of markers
+                var _labels = _markers.map(function (item) {
+                    return item.label;
+                });
+                // Check if ID already exists in array of markers.
+                var _index = _labels.indexOf(id);
+                if (_index !== -1) {
+                    //Remove if exists
+                    clusters.removeMarker(_markers[_index]);
+                }
+            }
+        }
+
+        /**
+         * Adds a marker to the map.
+         *
+         * @param objDetails, Object containing all marker details.
+         * {
+         *       position: {lat: x, lng: x},
+         *       label: "label",
+         *       icon: base65 img,
+         *       title: "title",
+         *       content: "content"
+         *   }
+         */
+        function addMarker(objDetails) {
+            // Create marker object.
+            objDetails["map"] = map;
+
+            markersInfo[objDetails.title] = objDetails;
+
+            if (objDetails.content) {
+                var infowindow = new google.maps.InfoWindow({
+                    content: markersInfo[objDetails.title].content
+                });
+
+                markerWindows[objDetails.title] = infowindow;
+            }
+
+            // Cast all values to a string.
+            for (var key in objDetails) {
+                if (typeof objDetails[key] === "number") {
+                    objDetails[key] = String(objDetails[key])
+                }
+            }
+
+            var marker = new google.maps.Marker(objDetails);
+            marker.setMap(map);
+            markers[objDetails.title] = marker;
+
+            // Bind infowindow.
+            if (markerWindows[objDetails.title]) {
+                marker.addListener(fw.attribs("display info on"), function () {
+                    // close all infowindows
+                    if (openInfoWindow) {
+                        openInfoWindow.close();
+                    }
+
+                    var infowindow = markerWindows[objDetails.title];
+
+                    infowindow.open(map, marker);
+                    openInfoWindow = infowindow;
+                });
+
+                if (fw.attribs("display info on") === "mouseover") {
+                    marker.addListener("mouseout", function () {
+                        // close all infowindows
+                        openInfoWindow.close();
+                        openInfoWindow = null;
+                    });
+                }
+
+                marker.addListener("click", function () {
+                    fw.fireEvent("pin pressed", objDetails);
+                });
+
+            }
+            if (clusteringEnabled) {
+                clusters.addMarker(marker);
+            }
+        }
+
+
+        /**
+         * Wrapper function for client events.
+         *
+         * @param payload
+         */
+        function openWindow(payload) {
+            var title = payload.value;
+            openMarkerInfoWindow(title);
+        }
+
+
+        /**
+         * Open the info window for a given marker title.
+         * @param markerTitle, Title of marker to open infowindow for.
+         */
+        function openMarkerInfoWindow(markerTitle) {
+            // Get Marker
+            var marker = markers[markerTitle.value];
+            // Check that marker is not null
+            if (marker == undefined) return;
+            // Get marker's infowindow
+            var infowindow = markerWindows[markerTitle.value];
+            // Check that marker has an infowindow.
+            if (infowindow == undefined) return;
+            // Close any windows that are currently open
+            if (openInfoWindow) openInfoWindow.close();
+            // Open marker's infowindow
+            infowindow.open(map, marker);
+            // set OpenInfoWindow variable to current infowindow.
+            openInfoWindow = infowindow;
+        }
+
+
+        /**
+         * Update marker position on the map.
+         * @param marker
+         * @param pos object containing keys lat and lng
+         */
+        function updateMarkerPosition(marker, data) {
+
+            markersInfo[data.title] = data;
+
+            if (data.content) {
+                markerWindows[data.title].setContent(data.content);
+            }
+
+            if (marker.position) {
+                marker.setPosition(data.position);
+            }
+
+            if (marker.setIcon) {
+                marker.setIcon(data.icon);
+            }
+
+            if (data.title) {
+                marker.setTitle(data.title);
+            }
+
+            if (data.label) {
+                marker.setLabel(data.label);
+            }
+
+            if (data.content && openInfoWindow) {
+                //openInfoWindow.setContent(data.content);
+            }
+        }
+
+
+        /**
+         * Initialize and add the map.
+         */
+        function initMap() {
+            var myStyles;
+            if (fw.attribs("display POIs") === "false") {
+                myStyles = [
+                    {
+                        featureType: "poi",
+                        elementType: "labels",
+                        stylers: [
+                            { visibility: "off" }
+                        ]
+                    }
+                ];
+            }
+             
+            var settingsLatLng = {
+                lat: +fw.attribs("latitude"),
+                lng: +fw.attribs("longitude")
+            };
+
+            if (mapFocus !== null && mapFocus !== undefined) {
+                settingsLatLng.lat = mapFocus.lat;
+                settingsLatLng.lng = mapFocus.lng;
+            }
+
+            infowindow = new window.google.maps.InfoWindow();
+            // The location of Uluru                        //TODO: OLD for removal
+            // The map, centered at Uluru
+            if (map == undefined) {
+                // Do not recreate the map
+                map = new window.google.maps.Map(widget, {
+                    zoom: +fw.attribs("zoom"),
+                    center: settingsLatLng,
+                    gestureHandling: fw.attribs("Coop. Scrolling") == "true" ? "cooperative" : 'greedy', // Removes the need to hold down the ctrl key
+                    mapTypeId: fw.attribs("type"),
+                    styles: myStyles,
+                    zoomControl: fw.attribs("zoom control") == "true" ? true : false,
+                    mapTypeControl: fw.attribs("map type control") == "true" ? true : false,
+                    scaleControl: fw.attribs("scale control") == "true" ? true : false,
+                    streetViewControl: fw.attribs("street view control") == "true" ? true : false,
+                    rotateControl: fw.attribs("rotate control") == "true" ? true : false,
+                    fullscreenControl: fw.attribs("fullscreen control") == "true" ? true : false
+                });
+            }
+
+            window.google.maps.event.addListener(map, 'mouseover', function () {
+                infowindow.close();
+            });
+
+            // Set event listener for each feature.
+            map.data.addListener('mouseover', function (event) {
+                //TODO: USe attrib7 for data storage and the code button to type in the HTML
+                infowindow.setContent("<b>" + event.feature.getProperty('id') + "</b><br>" + event.feature.getProperty('description'));
+                infowindow.setPosition(event.latLng);
+                infowindow.open(map);
+
+                var attribMap = fw.getAttribMap;
+                //outputScope = fw.attribs[fw.attribs.indexOf(attribMap["OUTPUT EVENT"]) + 1].value;
+                // Fire local event to trigger other widgets.
+
+            });
+
+            // Set event listener for each feature.
+            map.data.addListener('click', function (event) {
+                //TODO: USe attrib7 for data storage and the code button to type in the HTML
+
+                //var attribMap = fw.getAttribMap;
+                //outputScope = fw.attribs[fw.attribs.indexOf(attribMap["OUTPUT EVENT"]) + 1].value;
+                //if (outputScope === "onselect")
+                //    fw.func("fireEvent", attribMap["CLIENT CHANNEL"].value, attribMap["OUTPUT SCOPE"].value, event.feature.getProperty("id"));
+
+                // Fire local event to trigger other widgets.
+
+            });
+
+            if (fw.state === "DESIGN") {
+                map.setOptions({
+                    zoomControl: false,
+                    gestureHandling: 'none',
+                    disableDefaultUI: true
+                });
+            }
+
+            var iconSettings = {
+                url: pinIcon,
+                // url
+                scaledSize: new window.google.maps.Size(30, 30),
+                // scaled size
+                origin: new window.google.maps.Point(0, 0),
+                // origin
+                anchor: new window.google.maps.Point(15, 15)// anchor
+            };
+
+            map.data.setStyle({
+                icon: iconSettings
+
+            });
+
+            geocoder = new google.maps.Geocoder;
+             
+            if (clusteringEnabled) {
+                var grid_size = parseFloat(fw.attribs("clustering size"));
+                if (grid_size === 0) {
+                    // for some reason if you input a number as a string, it disables the clustering
+                    grid_size = "0";
+                }
+                clusters = new MarkerClusterer(map, [], {gridSize: grid_size, imagePath: "../images/m" });
+                clusters.addListener("clusteringend", function (e) {
+                    var counter = 0;
+                    e.getClusters().forEach(function (cluster, index, array) {
+                        cluster.getMarkers().forEach(function (marker, index, array) {
+                            if (array.length <= 1) {
+                                if (customPopList[marker.label].hidden) {
+                                    marker.setVisible(false);
+                                    customPopList[marker.label].unhide();
+                                }
+                                return;
+                            }
+                            if (!customPopList[marker.label].hidden) {
+                                customPopList[marker.label].hide();
+                            }
+                        });
+                    });
+                });
+            } else {
+                for (var popupIndex in customPopList) {
+                    if (customPopList[popupIndex].hidden) {
+                        customPopList[popupIndex].unhide();
+                    }
+
+                    if (!customPopList[popupIndex].hidden) {
+                        customPopList[popupIndex].hide();
+                    }
+                }
+            }
+            console.log("Map Ready!");
+            fw.ready();
+            unloadQueue();
+            unloadCustomPopups();
+        }
+
+
+        /**
+         * NO LONGER SUPPORTED
+         *
+         * @param data
+         */
+        function setCollection(data) {
+            if (collection !== null) {
+                return;
+            }
+            collection = data;
+            map.data.forEach(function (feature) {
+                map.data.remove(feature);
+            });
+            // Plot new data.
+            var collectionPoints = map.data.addGeoJson(collection);
+            fw.func("log", "MAP/setCollection", "Plotting new Collection.");
+            importedFeaturesDict = {};
+
+            for (var i = 0; i < collectionPoints.length; i++) {
+                importedFeaturesDict[collectionPoints[i].getProperty("id")] = collectionPoints[i];
+            }
+        }
+
+
+        /* Add feature to the map or update one that is existing.
+         * Example GEOJSON:
+         *  {
+         *    "type": "Feature",
+         *    "geometry": {
+         *    "type": "Point",
+         *    "coordinates": [125.6, 10.1]
+         * },
+         *    "properties": {
+         *        "id": "Dinagat Islands",
+         *        "namespace": "/HELLO/WORLD",
+         *        "description": "Island somewhere"
+         *    }
+         * }
+         */
+        function setFeature(data) {
+            if (data.type !== "Feature") {
+                fw.func("log", "MAP/setFeature", "Unsupported object type.");
+                return;
+                // Check if point doesn't already exist
+            } else if (importedFeaturesDict[data.properties.id] == null) {
+                // Add point to map.
+                var fs = map.data.addGeoJson(data);
+                importedFeaturesDict[data.properties.id] = fs;
+                // Point does exist, update existing data
+            } else {
+                var feature = importedFeaturesDict[data.properties.id];
+                map.data.remove(feature[0]);
+                importedFeaturesDict[data.properties.id] = map.data.addGeoJson(data);
+            }
+        }
+
+        function plotData(data) {
+            // Emit on new data.
+            if (outputScope === "onchange") {
+                fw.func("fireEvent", attribMap["CLIENT CHANNEL"].value, attribMap["OUTPUT SCOPE"].value, event.feature.getProperty("id"));
+            }
+
+            // Check data types
+            if (typeof data.value === "string") {
+                data = JSON.parse(data.value);
+            } else if (typeof data.value !== "object") {
+                return;
+            } else if (data.value) {
+                data = data.value;
+            } else if (Array.isArray(data)) {
+                var dataArray = data;
+                data = dataArray.shift();
+                plotData(dataArray);
+            }
+
+            // Check if geoJSON or not.
+            if (data.position !== undefined && data.position.lat !== undefined && data.position.lng !== undefined) {
+
+                // Check that marker does not already exist.
+                if (data.title && markers[data.title]) {
+                    updateMarkerPosition(markers[data.title], data);
+                    return;
+                }
+
+                // data is for a marker.
+                addMarker(data);
+                return;
+            }
+
+            // New Collection,, remove all datapoints and replot.
+            if (data.type === "FeatureCollection") {
+                setCollection(data);
+            } else {
+                setFeature(data);
+            }
+        }
+
+
+        /**
+         * Returns the address of a given location.
+         *
+         * @param {object} location - object containing .lng and .lat values as a number.
+         */
+        function getAddress(location) {
+            geocoder.geocode({ 'location': location }, function (results, status) {
+                if (status === 'OK') {
+                    if (results[0])
+                    {
+
+                    }
+                    else
+                    {
+                         window.alert('No results found');
+                    }
+                }
+                else
+                {
+                     window.alert('Geocoder failed due to: ' + status);
+                }
+            });
+        }
+
+
+        // TODO: Check if parse float is invalid and display error. DEAD CODE
+        function updateLocation() {
+            fw.func("log", "MAP/updateLocation", gLong + " " + gLat + " " + gZoom);
+        }
+
+        // [NEW_WIDGET] Example function to create an outgoing event. Delete if not needed
+        function widgetEvent(eventName, value) {
+            fw.fireEvent(eventName, value);
+        }
+        //#endregion
+
+        //#region --- Event functions ---
+        // function to receive data from a local channel/scope
+        function receiveValue(eventData) {
+            //...
+        }
+
+        // getValue is a request for value
+        function getValue(eventData) {
+            // ... perform some kind of response to the data request
+        }
+
+        // sends the value held across local channel or to the server
+        function sendValue() {
+            // ...
+        }
+
+        // Set action on the event's data
+        function set(eventData) {
+            setVal(eventData);
+        }
+
+        // Adjust widget based on feed
+        function setVal(data) {
+            //....
+        }
+        //TODO: Label this function
+        function unloadQueue() {
+            if (collection != null) {
+                plotData(collection);
+            }
+            while (backlog.length > 0) {
+                var feedData = backlog.shift();
+                plotData(feedData[2]);
+            }
+            fw.func("log", "MAP/unloadQueue", "Queue unloaded.");
+            loaded = true;
+        }
+
+        //#endregion
+
+        //#region --- Widget API functions ---
+        // Widget specific startup actions for dashboard. Return "OK" if startup OK else return an error string
+        function fw_dashStart(mode) {
+            fw.func("log", "MAP/fw_dashStart", "Loading maps.");
+            inputScope = fw.attribs("point or history Scope");
+            //HISTORY - Uses point scope for history scope
+            if (!isNaN(parseFloat(fw.attribs("history (hrs)")))) {
+                //    fw.func("S_HISTORY", fw.attribs[0].value, fw.attribs[2].value, Date.now() - 3600000 * fw.attribs[8].value, Date.now());         // request data from server
+            }
+         
+            return "OK";
+        }
+
+        // API startup actions for toolbox. Return "OK" if startup OK else return an error string
+        function fw_toolStart(mode) {
+            fw.widgetID.style.setProperty("display", "none");
+            return "OK";
+        }
+
+        // API startup actions when first created by dropping in design mode. Return "OK" if startup OK else return an error string
+        function fw_newWidget(mode) {
+            fw.widgetID.style.setProperty("display", "initial");
+            return "OK";
+        }
+
+        // API called when switching to design mode (optional, delete if not using)
+        function fw_startDesign() {
+            return true;
+        }
+
+        // API called to manage scaling
+        function fw_scale(scaleX, scaleY) {
+            fw.widgetID.style.setProperty("width", (options.settings.iniWidth * scaleX) + "px");
+            // Allow space for shadow
+            fw.widgetID.style.setProperty("height", (options.settings.iniHeight * scaleY) + "px");            // REMOVE IF NOT USING SVG
+            return true;
+        }
+
+        // API called when widget edit starts (return false to stop editor, "NOSCALE", "NOVERT", "NOHORIZ", "NOVERT,NOHORIZ" to customise scaling)
+        function fw_startEdit() {
+            return true;
+        }
+
+        // API called when widget edit finishes (apply edit changes here)
+        function fw_endEdit(mode) {
+            checkClustering();
+            
+            initMap();
+            var pos = {
+                lat: parseFloat(fw.attribs("latitude")),
+                lng: parseFloat(fw.attribs("longitude"))
+            }
+            map.setCenter(pos);
+            map.setZoom(+fw.attribs("zoom"));
+            fw.func("log", "MAP/fw_endEdit", "Updating location");
+            return true;
+        }
+
+        function client_feed(data) {
+            fw_feed(null, null, data);
+        }
+
+        // API called for incoming channel events
+        var inputScope;
+        function fw_feed(channel, client, data) {
+            // Add to a queue for processing later.
+            //if (fw.attribs[1].value.toUpperCase() === scope || fw.attribs[2].value.toUpperCase() === scope || scope === inputScope) {
+            // If scope specified in config, check for match
+            // Check if map has loaded and we have processed the backlog.
+
+            if (!loaded) {
+                fw.func("log", "MAP/fw_feed", "Map still loading. Adding data to queue.");
+                backlog.push([channel, client, data]);
+                return true;
+            } else {
+                plotData(data);
+                return true;
+            }
+            //}
+            return true;
+        }
+
+        function checkClustering() {
+            if (fw.attribs("clustering toggle") !== "false") {
+                script = document.createElement('script');
+                script.type = 'text/javascript';
+                script.src = "https://unpkg.com/@google/markerclustererplus@4.0.1/dist/markerclustererplus.min.js";
+                script.onload = function () { //...
+                    clusteringEnabled = true;
+                }
+                document.getElementById("head").appendChild(script);
+
+            }
+        }
+
+        // function fw_history(channel, scope, data) {
+        //     if (scope.trim().toUpperCase() === fw.attribs[2].value.trim().toUpperCase()) {
+        //         if (!loaded) {
+        //             setTimeout(history, 10, channel, scope, data);                                                      // Wait until map has been initialised
+        //             return;
+        //         }
+
+        //         var latLong = new Array();
+        //         var llTime = new Array();
+
+        //         for (var lp = 0; lp < data.length; lp++) {
+        //             if (typeof data[lp][1] !== "undefined" && data[lp][1].indexOf("{lat:,lng:}") !== 0) {               // Dont add nulls
+        //                 var point = data[lp][1];
+        //                 if (typeof point === "string") {                            // Convert string to object
+        //                     point = point.replace("lat", "\"lat\"");
+        //                     point = point.replace("lng", "\"lng\"");
+        //                 }
+        //                 latLong.push(JSON.parse(point));
+        //                 llTime.push(data[lp][0]);
+        //             }
+        //         }
+
+        //         if (typeof path !== "undefined") {
+        //             path.setMap(null);                                  // Remove old path
+        //         }
+        //         if (latLong.length > 0) {                                  // Didn't get any valid data
+        //             path = new google.maps.Polyline({                   // Only 1 path - TODO update for path array so several paths can be plotted concurrently
+        //                 path: latLong,
+        //                 geodesic: true,
+        //                 strokeColor: '#FF0000',
+        //                 strokeOpacity: 1.0,
+        //                 strokeWeight: 2
+        //             });
+        //             path.setMap(map);
+        //         }
+        //     }
+        // }
+
+
+        /**
+         * Returns the Popup class.
+         *
+         * Unfortunately, the Popup class can only be defined after
+         * google.maps.OverlayView is defined, when the Maps API is loaded.
+         * This function should be called by initMap.
+         */
+        function createPopupClass() {
+            /**
+             * A customized popup on the map.
+             * @param {!google.maps.LatLng} position
+             * @param {!Element} content The bubble div.
+             * @constructor
+             * @extends {google.maps.OverlayView}
+             */
+            function Popup(position, content) {
+                this.hidden = true;
+                this.position = position;
+
+                content.classList.add('popup-bubble');
+
+                // This zero-height div is positioned at the bottom of the bubble.
+                var bubbleAnchor = document.createElement('div');
+                bubbleAnchor.classList.add('popup-bubble-anchor');
+                bubbleAnchor.appendChild(content);
+
+                // This zero-height div is positioned at the bottom of the tip.
+                this.containerDiv = document.createElement('div');
+                this.containerDiv.classList.add('popup-container');
+                 
+                if (clusteringEnabled) {
+                    this.containerDiv.classList.add('hidden');
+                }
+                this.containerDiv.appendChild(bubbleAnchor);
+
+                // Optionally stop clicks, etc., from bubbling up to the map.
+                google.maps.OverlayView.preventMapHitsAndGesturesFrom(this.containerDiv);
+            }
+            // ES5 magic to extend google.maps.OverlayView.
+            Popup.prototype = Object.create(google.maps.OverlayView.prototype);
+
+            /** Called when the popup is added to the map. */
+            Popup.prototype.onAdd = function () {
+                this.getPanes().floatPane.appendChild(this.containerDiv);
+            };
+
+            /** Called when the popup is removed from the map. */
+            Popup.prototype.onRemove = function () {
+                if (this.containerDiv.parentElement) {
+                    this.containerDiv.parentElement.removeChild(this.containerDiv);
+                }
+            };
+
+            /** Called each frame when the popup needs to draw itself. */
+            Popup.prototype.draw = function () {
+                var divPosition = this.getProjection().fromLatLngToDivPixel(this.position);
+
+                // Hide the popup when it is far out of view.
+                var display =
+                    Math.abs(divPosition.x) < 4000 && Math.abs(divPosition.y) < 4000 ?
+                        'block' :
+                        'none';
+
+                if (display === 'block') {
+                    this.containerDiv.style.left = divPosition.x + 'px';
+                    this.containerDiv.style.top = divPosition.y + 'px';
+                }
+                if (this.containerDiv.style.display !== display) {
+                    this.containerDiv.style.display = display;
+                }
+            };
+
+            Popup.prototype.hide = function () {
+                this.containerDiv.classList.add("hidden");
+                this.hidden = true;
+            }
+
+            Popup.prototype.unhide = function () {
+                this.containerDiv.classList.remove("hidden");
+                this.hidden = false;
+            }
+
+            return Popup;
+        }
+
+                                    //#endregion
+    </script>
+</body>
+</html>

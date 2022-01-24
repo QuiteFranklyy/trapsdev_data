@@ -1,0 +1,3114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Trap Widget</title>
+    <link rel="preload" href="/fonts/OpenSans400.woff2" as="font" crossorigin="anonymous">
+    <link rel="preload" href="/fonts/MaterialIcons-Regular.woff2" as="font" crossorigin="anonymous">
+    <style>
+        /* Customize the label (the container) */
+        .container {
+            display: block;
+            position: relative;
+            padding-left: 2px;
+            /* padding: 15px; */
+            cursor: pointer;
+            /* font-size: 22px; */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+            /* Hide the browser's default checkbox */
+            .container input {
+                position: absolute;
+                opacity: 0;
+                cursor: pointer;
+                height: 0;
+                width: 0;
+            }
+
+        /* Create a custom checkbox */
+        .checkmark {
+            position: absolute;
+            top: 3px;
+            left: 0;
+            height: 15px;
+            width: 15px;
+            background-color: #f2f2f2;
+            border-radius: 2px;
+            border: 2px solid #e57123;
+        }
+
+        /* On mouse-over, add a grey background color */
+        .container:hover input ~ .checkmark {
+            background-color: rgba(247, 152, 89, 0.7);
+        }
+
+        /* When the checkbox is checked, add a blue background */
+        .container input:checked ~ .checkmark {
+            background-color: rgba(245, 129, 51);
+        }
+
+        /* Create the checkmark/indicator (hidden when not checked) */
+        .checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
+        }
+
+        /* Show the checkmark when checked */
+        .container input:checked ~ .checkmark:after {
+            display: block;
+        }
+
+        /* Style the checkmark/indicator */
+        .container .checkmark:after {
+            left: 4px;
+            /* top: 1px; */
+            width: 5px;
+            height: 10px;
+            border: solid white;
+            border-width: 0 3px 3px 0;
+            -webkit-transform: rotate(45deg);
+            -ms-transform: rotate(45deg);
+            transform: rotate(45deg);
+        }
+
+        body {
+            font-family: "Open Sans";
+            font-size: 16px;
+            user-select: none;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        @font-face {
+            font-family: "Open Sans";
+            font-style: normal;
+            font-weight: 400;
+            src: local("Open Sans"), local("OpenSans"), url(../fonts/OpenSans400.woff2) format("woff2"), url(../fonts/OpenSans400.woff) format("woff");
+            font-display: block;
+        }
+
+        @font-face {
+        font-family: "Material Icons";
+        font-style: normal;
+        font-weight: 400;
+        src: local("Material Icons"), local("MaterialIcons-Regular"),
+          url(/fonts/MaterialIcons-Regular.woff2) format("woff2"),
+          url(/fonts/MaterialIcons-Regular.woff) format("woff"),
+          url(/fonts/MaterialIcons-Regular.ttf) format("truetype");
+        font-display: block;
+      }
+
+      .material-icons {
+        font-family: "Material Icons";
+        font-weight: normal;
+        font-style: normal;
+        font-size: 24px;
+        /* Preferred icon size */
+        display: inline-block;
+        line-height: 1;
+        text-transform: none;
+        letter-spacing: normal;
+        word-wrap: normal;
+        white-space: nowrap;
+        direction: ltr;
+        /* Support for all WebKit browsers. */
+        -webkit-font-smoothing: antialiased;
+        /* Support for Safari and Chrome. */
+        text-rendering: optimizeLegibility;
+        /* Support for Firefox. */
+        -moz-osx-font-smoothing: grayscale;
+        /* Support for IE. */
+        -moz-font-feature-settings: "liga";
+        -ms-font-feature-settings: "liga";
+        -webkit-font-feature-settings: "liga";
+        font-feature-settings: "liga";
+      }
+
+        .noSelect {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        #widget {
+            background-color: white;
+        }
+
+        #container {
+            position: fixed;
+            height: calc(100% - 2px);
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            overflow: auto;
+        }
+
+        thead th {
+            position: sticky;
+            position: -webkit-sticky;
+            top: 35px;
+            z-index: 999;
+            background-color: #f2f2f2;
+        }
+
+        table {
+            border-collapse: collapse;
+            table-layout: fixed;
+            border-spacing: 0;
+            width: 100%;
+            max-height: calc(100% - 30px);
+            border: none;
+            bottom: 38px;
+        }
+
+        th {
+            text-transform: capitalize;
+            text-align: left;
+            padding: 5px 0px 5px 0px;
+            margin: 0px 4px 0px 4px;
+            background-color: white;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .checkbox-row {
+            height: 1.5rem;
+        }
+
+        td {
+            position: sticky;
+            text-align: left;
+            word-break: break-word;
+            padding: 5px 10px 5px 10px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        tr:nth-child(even) {
+            background-color: rgba(0,0,0,.05);
+        }
+
+        tr.selected {
+            background-color: #dff0d8;
+            font-weight: bold /* our pastel green*/
+        }
+
+        .rowHover:hover td {
+            background-color: #fffaf3;
+            /* our pastel yellow*/
+        }
+
+        #searchInp {
+            width: 100px;
+            float: right;
+            height: 25px;
+            text-indent: 4px;
+            font: 14px 'Open Sans';
+            display: none;
+            border-radius: 3px;
+            border-color: lightgray;
+            margin: 4px;
+            padding: .375rem .75rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #495057;
+            background-color: #fff;
+            background-clip: padding-box;
+            border: 1px solid #ced4da;
+            border-radius: .25rem;
+            transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+            -webkit-transition: width 0.4s ease-in-out;
+            transition: width 0.4s ease-in-out;
+        }
+
+            /* When the input field gets focus, change its width to 100% */
+            #searchInp:focus {
+                width: 300px;
+            }
+
+        /* Remove blue box around textbox. */
+        input:focus {
+            outline: none;
+        }
+
+        #headerBar {
+            top: 0;
+            z-index: 100;
+            position: sticky;
+            /* display: none; */
+            background-color: #f2f2f2;
+            /* height: 34px; */
+            border-bottom: 1px solid #ddd;
+            overflow: auto;
+        }
+
+        #tableTitle {
+            float: left;
+            margin: 6px 0 6px 14px;
+        }
+
+        .headCol {
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        /* Status border */
+        .newPhotoBorder {
+            border-right: 5px solid blue;
+        }
+
+        .openCardBorder {
+            border-right: 5px solid black;
+        }
+
+        .normalCardBorder {
+            border-right: 5px solid #f2f2f2;
+        }
+
+        .alertCardBorder {
+            border-right: 5px solid red;
+        }
+
+        span[data-section="deviceStatus"] {
+            color: grey;
+            visibility: hidden;
+        }
+
+        span[data-section="newPhotoIcon"] {
+            visibility: hidden;
+        }
+
+/*
+        div[data-section='photo'] {
+            display: none;
+        }
+*/
+        /* Triggered */
+        .redIcon {
+            background-image: url("/userfiles/Animal-Trap-Icon-Red.svg");
+            background-size: contain;
+            background-color: white;
+            border-radius: 5px;
+        }
+
+            .redIcon.camera {
+                background-image: url("/userfiles/ATS-App-Icon-Red-v2.svg");
+            }
+
+            .redIcon.virtual {
+                background-image: url("/userfiles/Virtual_Trap_Icon_Red.svg")
+            }
+
+        /* Inactive */
+        .greyIcon {
+            background-image: url("/userfiles/Animal-Trap-Icon-DkGrey.svg");
+            background-size: contain;
+            background-color: white;
+            border-radius: 5px;
+        }
+
+            .greyIcon.camera {
+                background-image: url("/userfiles/ATS-App-Icon-Grey-v2.svg");
+            }
+
+            .greyIcon.virtual {
+                background-image: url("/userfiles/Virtual_Trap_Icon_Grey.svg")
+            }
+
+        /* Set  */
+        .greenIcon {
+            background-image: url("/userfiles/Animal-Trap-Icon-Green_2.svg");
+            background-size: contain;
+            background-color: white;
+            border-radius: 5px;
+        }
+
+            .greenIcon.camera {
+                background-image: url("/userfiles/ATS-App-Icon-Green-v2.svg");
+            }
+
+            .greenIcon.virtual {
+                background-image: url("/userfiles/Virtual_Trap_Icon_Green.svg")
+            }
+
+
+
+        .capitalize {
+            text-transform: capitalize;
+        }
+
+        .button {
+            background-color: #4CAF50;
+            /* Green */
+            font-family: sans-serif;
+            border: none;
+            color: white;
+            padding: 10px 25px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            /* font-size: 1rem; */
+            border-radius: 6px;
+            height: 50px;
+            cursor: pointer;
+        }
+
+        .notes-css {
+            cursor: pointer;
+            display: block;
+            font-size: 16px;
+            font-family: sans-serif;
+            font-weight: 700;
+            color: #444;
+            line-height: 1.3;
+            padding: 0.6em 0.8em;
+            width: calc(100% - 16px);
+            max-width: 100%;
+            box-sizing: border-box;
+            margin: 8px;
+            border: 1px solid #aaa;
+            box-shadow: 0 1px 0 1px rgba(0, 0, 0, .04);
+            -moz-appearance: none;
+            -webkit-appearance: none;
+            appearance: none;
+            background-color: #fff;
+            background-repeat: no-repeat, repeat;
+            background-position: right .7em top 50%, 0 0;
+            background-size: .65em auto, 100%;
+        }
+
+            .notes-css::-ms-expand {
+                display: none;
+            }
+
+            .notes-css:hover {
+                border-color: #888;
+            }
+
+            .notes-css:focus {
+                border-color: #aaa;
+                box-shadow: 0 0 1px 3px rgba(59, 153, 252, .7);
+                box-shadow: 0 0 0 3px -moz-mac-focusring;
+                color: #222;
+                outline: none;
+            }
+
+            .notes-css option {
+                font-weight: normal;
+            }
+
+
+        .select-css {
+            text-transform: capitalize;
+            cursor: pointer;
+            display: block;
+            font-size: 16px;
+            font-family: sans-serif;
+            font-weight: 700;
+            color: #444;
+            line-height: 1.3;
+            padding: 0.6em 0.8em;
+            width: calc(100% - 16px);
+            max-width: 100%;
+            box-sizing: border-box;
+            margin: 8px;
+            border: 1px solid #aaa;
+            box-shadow: 0 1px 0 1px rgba(0, 0, 0, .04);
+            -moz-appearance: none;
+            -webkit-appearance: none;
+            appearance: none;
+            background-color: #fff;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat, repeat;
+            background-position: right .7em top 50%, 0 0;
+            background-size: .65em auto, 100%;
+        }
+
+            .select-css::-ms-expand {
+                display: none;
+            }
+
+            .select-css:hover {
+                border-color: #888;
+            }
+
+            .select-css:focus {
+                border-color: #aaa;
+                box-shadow: 0 0 1px 3px rgba(59, 153, 252, .7);
+                box-shadow: 0 0 0 3px -moz-mac-focusring;
+                color: #222;
+                outline: none;
+            }
+
+            .select-css option {
+                font-weight: normal;
+            }
+
+        .container {
+            height: 30px;
+            position: relative;
+        }
+
+        .vertical-center {
+            margin: 0;
+            position: absolute;
+            top: 50%;
+            -ms-transform: translateY(-50%);
+            transform: translateY(-50%);
+        }
+
+        ul {
+            margin: 4px 0 4px 0;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        li {
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .iconSection {
+            /*margin-top: 8px; */
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body id="body">
+    <div id="group">
+        <div id="widget" style="position:absolute; left:0px; top:0px; width:100%; height:100px; z-index:100;">
+            <div id="container">
+                <div id="headerBar" style="display: flex;">
+                    <input class="notes-css" type="search" placeholder="Search" oninput="search(this.value)" />
+                    <button data-button="recordCatch" onclick="showFormScreen(event)" class="button" style="margin: 5px; padding: 10px; height: auto;">Record Catch</button>
+                    <button data-button="addVirtualTrap" onclick="fw.fireEvent('plus icon pressed')" class="button" style="background-color: white; background-repeat: no-repeat; background-image: url('/userfiles/Virtual_Trap_Icon_Green.svg'); margin:5px; background-size: 50px 50px; width: 50px; font-size: 2rem; height: auto;"></button>
+                </div>
+                <table id="table" style="width: 100%">
+                    <thead>
+                        <tr id="header">
+                        </tr>
+                    </thead>
+                    <tbody id="tbody">
+                        <div data-section="recordCatchCard" style="display: none;">
+
+                        </div>
+                    </tbody>
+                </table>
+                <div id="footer" style="height:30px; width: 100%"></div>
+            </div>
+        </div>
+    </div>
+    <div id="virtualCardTemplate" style="display: none">
+        <div>
+            <div data-section="main" data-value="triggered" class="normalCardBorder" onclick="toggleClearScreen(this)" style="font-family: sans-serif; background-color: #f2f2f2;border-bottom: 3px solid white; padding: 8px; overflow:auto;">
+                <div data-section="cell" style="display: flex; overflow: hidden; height: 100%">
+                    <div id="left-section" style="flex: 1; flex-grow: 1; height: 100%">
+                        <div class="container" style="display: flex; flex-direction: row; height: 100%">
+
+                            <!-- Column 0: Icon,hours | setTime, checkTime, updateTime, triggeredTime-->
+                            <div style="display: flex; flex-direction: column; flex: 1; flex-grow: 0; justify-content: space-evenly;">
+                                <div data-info="icon" class="redIcon" style="width: 25px; height: 25px;"></div>
+                                <div data-value="settime" style="display: none;"></div>
+                                <div data-value="checktime" style="display: none;"></div>
+                                <div data-value="updatetime" style="display: none;"></div>
+                                <div data-value="triggeredtime" style="display: none;"></div>
+                                <div data-value="hours" style="border: 2px solid red; border-radius: 14px; text-align:center; color: red; font-weight:bold; padding: 2px; margin-right: 8px; margin-top: 4px; min-width: 16px; ">
+                                    -
+                                </div>
+                            </div>
+
+                            <!-- Column 1: Name, Address, Suburb-->
+                            <div style="display: flex; flex-direction: column; flex: 1;">
+                                <div data-value="id" class="capitalize" style="font-weight: bold; font-size: 18px">
+                                    --
+                                </div>
+
+                                <div data-value="address" style="display: inline-block;">
+                                    --
+                                </div>
+                                <span style="text-decoration: underline; cursor: pointer;">
+                                    <span data-value="suburb" onclick="addressEvent(event)">--</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <span data-section="right-section" id="right-section" style="flex: 1; text-align: right; flex-grow: 1">
+                        <span data-value="traptype" class="capitalize">--</span>
+                        <br />
+                        <span data-value="trapper" class="capitalize">--</span>
+                    </span>
+                    <div class="iconSection">
+                        <span data-section="newPhotoIcon" class="material-icons">photo_camera</span>
+                        <br />
+                        <span data-section="deviceStatus" class="material-icons">nightlight_round</span>
+                    </div>
+                </div>
+                <div data-section="clearScreen" onclick="event.stopPropagation()" style="background-color: #e6e6e6; padding: 8px; margin-top: 15px; border: 1px solid #bfbfbf; overflow: auto; display: none;">
+                    <div style="overflow: auto;">
+                        <div style="display: flex; flex-direction: column">
+                            <div data-section="alert" style="display: none; flex-direction: column; justify-content:space-evenly; text-align: center; margin-bottom: 4px;">
+                                <div data-value="alert">
+                                </div>
+                                <hr style="margin: 8px" />
+                            </div>
+                            <div style="display: flex; flex-direction: row; justify-content:space-evenly; text-align: center; margin: 8px;">
+                                <!-- Set-->
+                                <div>
+                                    <div data-title="set">
+                                        Set
+                                    </div>
+                                    <div class="material-icons" style="margin: 8px">
+                                        access_time
+                                    </div>
+                                    <div data-value="setTimeFormatted">
+                                        --
+                                    </div>
+                                </div>
+                                <!-- Checked -->
+                                <div>
+                                    <div data-title="check">
+                                        Checked
+                                    </div>
+                                    <div class="material-icons" style="margin: 8px">
+                                        access_time
+                                    </div>
+                                    <div data-value="checkTimeFormatted">
+                                        --
+                                    </div>
+                                </div>
+                                <!-- Updated -->
+                                <div style="display: none;">
+                                    <div>
+                                        Updated
+                                    </div>
+                                    <div class="material-icons" style="margin: 8px">
+                                        access_time
+                                    </div>
+                                    <div data-value="updateTimeFormatted">
+                                        --
+                                    </div>
+                                </div>
+                                <!-- Triggered-->
+                                <div style="display: none;">
+                                    <div>
+                                        Triggered
+                                    </div>
+                                    <div class="material-icons" style="margin: 8px">
+                                        access_time
+                                    </div>
+                                    <div data-value="triggeredTimeFormatted">
+                                        --
+                                    </div>
+                                </div>
+                            </div>
+                            <hr style="margin: 8px" />
+                            <div style="display: flex; flex-direction: row; justify-content:space-evenly; text-align: center; margin: 8px;">
+                                <!-- Battery-->
+                                <div style="display: none;">
+                                    <div class="material-icons">
+                                        battery_full
+                                    </div>
+                                    <div data-value="battery">
+                                        -
+                                    </div>
+                                </div>
+                                <!-- Sensor Battery ??-->
+                                <div style="display: none;">
+                                    <div class="material-icons">
+                                        blur_circular
+                                    </div>
+                                    <div data-value="sensorBattery">
+                                        -
+                                    </div>
+                                </div>
+                                <!-- Temperature -->
+                                <div style="display: none;">
+                                    <img width="24" height="24" src="/userfiles/temp.png"/>
+                                    <div data-value="temp">
+                                        -
+                                    </div>
+                                </div>
+                                <!-- Signal Strength-->
+                                <div style="display: none;">
+                                    <div class="material-icons">
+                                        tap_and_play
+                                    </div>
+                                    <div data-value="signal">
+                                        -
+                                    </div>
+                                </div>
+                                <!-- View Photos-->
+                                <div data-section="photo" onclick="fw.fireEvent('photo icon pressed', cardSelected.parentElement.parentElement.getAttribute('data-id'));">
+                                    <div data-value="photo"></div>
+                                    <div class="material-icons" style="cursor: pointer;">
+                                        camera_roll
+                                    </div>
+                                    <div>
+                                        View Photo
+                                    </div>
+                                </div>
+                            </div>
+                            <div data-section="notes" style="display: none; flex-direction: column; justify-content:space-evenly; text-align: center; margin-bottom: 4px;">
+                                <hr style="margin: 8px" />
+                                <div style="text-decoration: underline;">
+                                    Trap Notes
+                                </div>
+                                <div data-value="notes">
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; flex-direction: row-reverse;">
+                            <button data-button="deactivateButton" onclick="deactivateTrap(event)" class="button" style="flex-basis: 30%; padding: 0px; order: 3; background-color: #333333;">
+                                DEACTIVATE
+                            </button>
+                            <button data-button="checkButton" class="button" style="display: none; order: 2; flex-basis: 30%; margin: 0 10px;" onclick="updateCheckTime(event)">
+                                CHECK
+                            </button>
+                            <button data-button="clearButton" class="button" style="display: none; order: 1;flex-basis: 30%;" onclick="showFormScreen(event)">
+                                RECORD CATCH
+                            </button>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div id="cameraTrapCardTemplate" style="display: none">
+        <div>
+            <div data-section="main" data-value="triggered" class="normalCardBorder" onclick="toggleClearScreen(this)" style="font-family: sans-serif; background-color: #f2f2f2;border-bottom: 3px solid white; padding: 8px; overflow:auto;">
+                <div data-section="cell" style="display: flex; overflow: hidden; height: 100%">
+                    <div id="left-section" style="flex: 1; flex-grow: 1; height: 100%">
+                        <div class="container" style="display: flex; flex-direction: row; height: 100%">
+                            <div style="display: flex; flex-direction: column; flex: 1; flex-grow: 0; justify-content: space-evenly;">
+                                <div data-info="icon" class="redIcon" style="width: 25px; height: 25px;"></div>
+                                <div data-value="settime" style="display: none;"></div>
+                                <div data-value="checktime" style="display: none;"></div>
+                                <div data-value="updatetime" style="display: none;"></div>
+                                <div data-value="triggeredtime" style="display: none;"></div>
+                                <div data-value="hours" style="border: 2px solid red; border-radius: 14px; text-align:center; color: red; font-weight:bold; padding: 2px; margin-right: 8px; margin-top: 4px; min-width: 16px; ">
+                                    -
+                                </div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; flex: 1;">
+                                <div data-value="id" class="capitalize" style="font-weight: bold; font-size: 18px">
+                                    --
+                                </div>
+
+                                <div style="display: inline-block;" data-value="address">--</div>
+                                <span style="text-decoration: underline; cursor: pointer;">
+                                    <span data-value="suburb" onclick="addressEvent(event)">--</span>
+                                </span>
+
+                            </div>
+                        </div>
+                    </div>
+                    <span data-section="right-section" id="right-section" style="flex: 1; text-align: right; flex-grow: 1">
+                        <span data-value="traptype" class="capitalize">--</span>
+                        <br />
+                        <span data-value="trapper" class="capitalize">--</span>
+                    </span>
+                    <div class="iconSection">
+                        <span data-section="newPhotoIcon" class="material-icons">photo_camera</span>
+                        <br />
+                        <span data-section="deviceStatus" class="material-icons"></span>
+                    </div>
+                </div>
+                <div data-section="clearScreen" onclick="event.stopPropagation()" style="background-color: #e6e6e6; padding: 8px; margin-top: 15px; border: 1px solid #bfbfbf; overflow: auto; display: none;">
+                    <div style="overflow: auto;">
+                        <div style="display: flex; flex-direction: column">
+                            <div data-section="alert" style="display: none; flex-direction: column; justify-content:space-evenly; text-align: center; margin-bottom: 4px;">
+                                <div data-value="alert">
+                                </div>
+                                <hr style="margin: 8px" />
+                            </div>
+                            <div style="display: flex; flex-direction: row; justify-content:space-evenly; text-align: center; margin: 8px;">
+                                <div>
+                                    <div data-title="set">
+                                        Set
+                                    </div>
+                                    <div class="material-icons" style="margin: 8px">
+                                        access_time
+                                    </div>
+                                    <div data-value="setTimeFormatted">
+                                        --
+                                    </div>
+                                </div>
+                                <div>
+                                    <div data-title="check">
+                                        Checked
+                                    </div>
+                                    <div class="material-icons" style="margin: 8px">
+                                        access_time
+                                    </div>
+                                    <div data-value="checkTimeFormatted">
+                                        --
+                                    </div>
+                                </div>
+                                <div>
+                                    <div>
+                                        Updated
+                                    </div>
+                                    <div class="material-icons" style="margin: 8px">
+                                        access_time
+                                    </div>
+                                    <div data-value="updateTimeFormatted">
+                                        --
+                                    </div>
+                                </div>
+                                <div data-section="triggerDetails">
+                                    <div>
+                                        Triggered
+                                    </div>
+                                    <div class="material-icons" style="margin: 8px">
+                                        access_time
+                                    </div>
+                                    <div data-value="triggeredTimeFormatted">
+                                        --
+                                    </div>
+                                </div>
+                            </div>
+                            <hr style="margin: 8px" />
+                            <div style="display: flex; flex-direction: row; justify-content:space-evenly; text-align: center; margin: 8px;">
+                                <div>
+                                    <div class="material-icons">
+                                        battery_full
+                                    </div>
+                                    <div data-value="battery">
+                                        -
+                                    </div>
+                                </div>
+                                <div style="display: none;">
+                                    <div class="material-icons">
+                                        blur_circular
+                                    </div>
+                                    <div data-value="sensorBattery">
+                                        -
+                                    </div>
+                                </div>
+                                <div>
+                                    <img width="24" height="24" src="/userfiles/temp.png"/>
+                                    <div data-value="temp">
+                                        -
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="material-icons">
+                                        tap_and_play
+                                    </div>
+                                    <div data-value="signal">
+                                        -
+                                    </div>
+                                </div>
+                                <div data-section="photo" onclick="fw.fireEvent('photo icon pressed', cardSelected.parentElement.parentElement.getAttribute('data-id'));">
+                                    <div data-value="photo"></div>
+                                    <div class="material-icons" style="cursor: pointer;">
+                                        camera_roll
+                                    </div>
+                                    <div>
+                                        View Photos
+                                    </div>
+                                </div>
+                            </div>
+                            <div data-section="notes" style="display: none; flex-direction: column; justify-content:space-evenly; text-align: center; margin-bottom: 4px;">
+                                <hr style="margin: 8px" />
+                                <div style="text-decoration: underline;">
+                                    Trap Notes
+                                </div>
+                                <div data-value="notes">
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; flex-direction: row-reverse;">
+                            <button data-button="clearButton" class="button" style="order: 1; min-width: 35%;" onclick="showFormScreen(event)">
+                                CLEAR
+                            </button>
+                            <button data-button="deactivateButton" onclick="deactivateTrap(event)" class="button" style="order: 2; min-width: 35%; background-color: #333333;">
+                                DEACTIVATE
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="ATSCardTemplate" style="display: none" >
+        <div>
+            <div data-section="main" data-value="triggered" class="normalCardBorder" onclick="toggleClearScreen(this)" style="font-family: sans-serif; background-color: #f2f2f2;border-bottom: 3px solid white; padding: 8px; overflow:auto;">
+                <div data-section="cell" style="display: flex; overflow: hidden; height: 100%">
+                    <div id="left-section" style="flex: 1; flex-grow: 1; height: 100%">
+                        <div class="container" style="display: flex; flex-direction: row; height: 100%">
+                            <div style="display: flex; flex-direction: column; flex: 1; flex-grow: 0; justify-content: space-evenly;">
+                                <div data-info="icon" class="redIcon" style="width: 25px; height: 25px;"></div>
+                                <div data-value="settime" style="display: none;"></div>
+                                <div data-value="checktime" style="display: none;"></div>
+                                <div data-value="updatetime" style="display: none;"></div>
+                                <div data-value="triggeredtime" style="display: none;"></div>
+                                <div data-value="tasupdatetime" style="display: none;"></div>
+                                <div data-value="hours" style="border: 2px solid red; border-radius: 14px; text-align:center; color: red; font-weight:bold; padding: 2px; margin-right: 8px; margin-top: 4px; min-width: 16px; ">
+                                    -
+                                </div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; flex: 1;">
+                                <div data-value="id" class="capitalize" style="font-weight: bold; font-size: 18px">
+                                    --
+                                </div>
+
+                                <div style="display: inline-block;" data-value="address">--</div>
+                                <span style="text-decoration: underline; cursor: pointer;">
+                                    <span data-value="suburb" onclick="addressEvent(event)">--</span>
+                                </span>
+
+                            </div>
+                        </div>
+                    </div>
+                    <span data-section="right-section" id="right-section" style="flex: 1; text-align: right; flex-grow: 1">
+                        <span data-value="traptype" class="capitalize">--</span>
+                        <br />
+                        <span data-value="trapper" class="capitalize">--</span>
+                    </span>
+                    <div class="iconSection">
+                        <span data-section="newPhotoIcon" class="material-icons">photo_camera</span>
+                        <br />
+                        <span data-section="deviceStatus" class="material-icons">nightlight_round</span>
+                    </div>
+                </div>
+                <div data-section="clearScreen" onclick="event.stopPropagation()" style="background-color: #e6e6e6; padding: 8px; margin-top: 15px; border: 1px solid #bfbfbf; overflow: auto; display: none;">
+                    <div style="overflow: auto;">
+                        <div style="display: flex; flex-direction: column">
+                            <div data-section="alert" style="display: none; flex-direction: column; justify-content:space-evenly; text-align: center; margin-bottom: 4px;">
+                                <div data-value="alert">
+                                </div>
+                                <hr style="margin: 8px" />
+                            </div>
+                            <div style="display: flex; flex-direction: row; justify-content:space-evenly; text-align: center; margin: 8px;">
+                                <div>
+                                    <div data-title="set">
+                                        Set
+                                    </div>
+                                    <div class="material-icons" style="margin: 8px">
+                                        access_time
+                                    </div>
+                                    <div data-value="setTimeFormatted">
+                                        --
+                                    </div>
+                                </div>
+                                <div>
+                                    <div data-title="check">
+                                        Checked
+                                    </div>
+                                    <div class="material-icons" style="margin: 8px">
+                                        access_time
+                                    </div>
+                                    <div data-value="checkTimeFormatted">
+                                        --
+                                    </div>
+                                </div>
+                                <div>
+                                    <div>
+                                        Updated
+                                    </div>
+                                    <div class="material-icons" style="margin: 8px">
+                                        access_time
+                                    </div>
+                                    <div data-value="updateTimeFormatted">
+                                        --
+                                    </div>
+                                </div>
+                                <div data-section="triggerDetails">
+                                    <div>
+                                        Triggered
+                                    </div>
+                                    <div class="material-icons" style="margin: 8px">
+                                        access_time
+                                    </div>
+                                    <div data-value="triggeredTimeFormatted">
+                                        --
+                                    </div>
+                                </div>
+                            </div>
+                            <hr style="margin: 8px" />
+                            <div style="display: flex; flex-direction: row; justify-content:space-evenly; text-align: center; margin: 8px;">
+                                <div>
+                                    <div class="material-icons">
+                                        battery_full
+                                    </div>
+                                    <div data-value="battery">
+                                        -
+                                    </div>
+                                </div>
+                                <div style="display: none;">
+                                    <div class="material-icons">
+                                        blur_circular
+                                    </div>
+                                    <div data-value="sensorBattery">
+                                        -
+                                    </div>
+                                </div>
+                                <div>
+                                    <img width="24" height="24" src="/userfiles/temp.png"/>
+                                    <div data-value="temp">
+                                        -
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="material-icons">
+                                        tap_and_play
+                                    </div>
+                                    <div data-value="signal">
+                                        -
+                                    </div>
+                                </div>
+                            </div>
+                            <hr style="margin: 8px" />
+                            <span style="width: 100%; text-align: center;">TAS ID: <span data-value="tasName"></span></span>
+                            <div style="display: flex; flex-direction: row; justify-content:space-evenly; text-align: center; margin: 8px;">
+                                <div>
+                                    <div class="material-icons">
+                                        blur_circular
+                                    </div>
+                                    <div data-value="tasBattery">
+                                        -
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="material-icons">
+                                        tap_and_play
+                                    </div>
+                                    <div data-value="signal">
+                                        -
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="material-icons">
+                                        access_time
+                                    </div>
+                                    <div data-value="tasUpdateTimeFormatted">
+                                        --
+                                    </div>
+                                </div>
+                            </div>
+                            <hr style="margin: 8px" />
+                            <div data-section="photo" style="display: flex; flex-direction: row; justify-content:space-evenly; text-align: center; margin: 8px;">
+                                <div onclick="requestPhoto(event)">
+                                    <div data-button="requestPhotoButton" style="order: 1; min-width: 35%; cursor: pointer;">
+                                        <span data-info="requestPhoto" class="material-icons">photo_camera</span>
+                                    </div>
+                                    <div>
+                                        Request Photo
+                                    </div>
+                                </div>
+                                <div onclick="fw.fireEvent('photo icon pressed', cardSelected.parentElement.parentElement.getAttribute('data-id'));">
+                                    <div data-value="photo"></div>
+                                    <div class="material-icons" style="cursor: pointer;">
+                                        camera_roll
+                                    </div>
+                                    <div>
+                                        View Photos
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div data-section="notes" style="display: none; flex-direction: column; justify-content:space-evenly; text-align: center; margin-bottom: 4px;">
+                                <hr style="margin: 8px" />
+                                <div style="text-decoration: underline;">
+                                    Trap Notes
+                                </div>
+                                <div data-value="notes">
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; flex-direction: row-reverse;">
+                            <button data-button="clearButton" class="button" style="order: 1; min-width: 35%;" onclick="showFormScreen(event)">
+                                CLEAR
+                            </button>
+                            <button data-button="deactivateButton" onclick="deactivateTrap(event)" class="button" style="order: 2; min-width: 35%; background-color: #333333;">
+                                DEACTIVATE
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div data-section="formScreen" onclick="event.stopPropagation()" style="display: none; background-color: #e6e6e6; border: 1px solid #bfbfbf; margin-top: 15px; display: none;">
+        <div data-form="formTemp">
+            <select data-select="atsmode" data-form="atsmode" class="select-css" style="margin-top: 15px" placeholder="Motion" type="number">
+                <option value="default" disabled selected>Select Device Mode</option>
+                <option value="motion">Motion</option>
+                <option value="magnet">Magnet</option>
+                <option value="tas motion">TAS Motion</option>
+            </select>
+            <input data-form="tasid" class="notes-css" style="margin-top: 15px" placeholder="TAS ID" />
+            <input data-form="job" class="notes-css" style="margin-top: 15px" placeholder="Job ID" />
+            <select data-select="trapType" class="select-css" style="margin-top: 15px;">
+                <option value="default" selected disabled>Select Trap Type</option>
+            </select>
+            <select data-select="trapper" class="select-css" style="margin-top: 15px; text-transform: capitalize;">
+                <option value="default" selected disabled>Select Trapper</option>
+            </select>
+            <select data-select="animalType" class="select-css" style="margin-top: 15px;">
+                <option value="default" disabled selected>Select Animal Caught</option>
+            </select>
+            <select data-select="sex" class="select-css" style="margin-top: 15px;">
+                <option value="default" disabled selected>Select Animal Sex</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="unknown">Unknown</option>
+            </select>
+            <select data-select="age" data-form="age" class="select-css" style="margin-top: 15px" placeholder="Age" type="number">
+                <option value="default" disabled selected>Select Animal Age</option>
+                <option value="juvenile">Juvenile</option>
+                <option value="adult">Adult</option>
+            </select>
+            <input data-form="subspecies" class="notes-css" style="margin-top: 15px" placeholder="Subspecies" />
+            <input data-form="lure" class="notes-css" style="margin-top: 15px; " type="text" placeholder="Lure Type">
+            <textarea data-form="catchNotes" class="notes-css" style="margin-top: 15px; resize: none; align-self: center;" rows="4" placeholder="Catch notes"></textarea>
+            <textarea data-form="notes" class="notes-css" style="margin-top: 15px; resize: none; align-self: center;" rows="4" placeholder="Trap notes"></textarea>
+            <div class="location-form" style="display: flex; /*justify-content: space-around; align-items: center;*/">
+                <span style="display: none; flex-direction: column;">
+                    Latitude:
+                    <span data-value="lat" data-form="lat"> - </span>
+                </span>
+                <span style="display: none;flex-direction: column;">
+                    Longitude:
+                    <span data-value="lon" data-form="lon"> - </span>
+                </span>
+                <button class="button" style="justify-content: center;width: 100%; margin: 15px 8px 0px 8px;" onclick="updateLocation()" data-button="updateLocation">
+                    Update Location
+                </button>
+            </div>
+
+            <div style="display: flex; justify-content: center;">
+                <button style="width: 100%; margin: 15px 8px 0px 8px;" class="button" onclick="uploadFile()" data-form="file">Upload Photo</button>
+            </div>
+            <input class="notes-css" data-form="file" type="file" accept="image/jpeg" style="display: none;">
+        </div>
+        <div style="overflow: auto; margin-top:8px">
+            <button data-button="submitButton" class="button" onclick="submitTrap(event)" style="float: right; min-width: 35%; margin: 8px; margin-top: 15px">
+                CLEAR
+            </button>
+            <button data-button="cancelButton" onclick="cancelFormScreen(event)" class="button" style="float: left; min-width: 35%; margin: 8px; margin-top: 15px; background-color: grey;">
+                CANCEL
+            </button>
+        </div>
+    </div>
+
+    
+    
+    <script>
+        "use strict";
+        var fw =  new parent.widgetAPI(window.name);  // widget framework object
+
+        var options = {
+            settings: {
+                "category": "widget",
+                "type": window.location.pathname.split("/").slice(-1)[0].split(".")[0].replace("%20", " "),
+                "iniHeight": parseInt(widget.style.height),
+                "iniWidth": parseInt(widget.style.width),
+                "author": "Sensavation",
+                "tbTooltip": "Display data by column/row",
+                "tooltip": "",
+                "version": "190104",
+                "group": "forms",
+                "zIndex": "ZINDEX_DEFAULT",
+                "disabled": false,
+                "scaling": true,
+                "help": { "type": "file", "source": "help/widgets/Generic.md" }
+            },
+            clientEvents: {
+                inputEvents: {
+                    "receive value": receiveValue,
+                    "set trappers": setTrappers,
+                    "set trap type": setTrapTypes,
+                    "set animals": setAnimals,
+                    "set alert": setAlertEvent,
+                    "set default trapper": setDefaultTrapper,
+                    "toggle card": toggleCardEvent,
+                    "set new photo status": newPhotoEvent,
+                    "sort": sortEvent,
+                    "filter": filterCards,
+                    "filter by trappers": filterTrappers,
+                    "clear content": clearContent,
+                    "remove card": removeCard,
+                    "set device status": setDeviceStatus
+
+                },
+                outputEvents: [
+                    "card selected",
+                    "card closed",
+                    "deactivate trap",
+                    "address pressed",
+                    "set trap",
+                    "check trap",
+                    "clear trap",
+                    "record catch",
+                    "plus icon pressed",
+                    "photo icon pressed",
+                    "update location pressed",
+                    "request photo pressed"
+                ]
+            },
+            serverEvents: {
+                inputEvents: {
+                    "feed": {
+                        "function": fw_feed
+                    }
+                },
+                outputEvents: []
+            },
+            dataTypes: {
+                "feed": ["sensacollection"],
+                "retValue": ["array"]
+            },
+            attribs: {
+                "wait for filter": {
+                    "type": "checkbox",
+                    "tooltip": "Do not show cards until filter event is received.",
+                    "default": "false",
+                    "group": "filter"
+                },
+            }
+        };
+        //#endregion
+
+        // Look at having a circular array incase the buffer gets too big. Will be an issue if page is left open for weeks.
+        var tableBody = document.getElementById("tbody");
+        var cameraTrapCardTemplate = document.getElementById("cameraTrapCardTemplate");
+        var virtualCardTemplate = document.getElementById("virtualCardTemplate");
+        var atsCardTemplate = document.getElementById("ATSCardTemplate");
+
+        var formDiv = document.querySelector("[data-section='formScreen']");
+
+        var recordCatchCard = document.querySelector("[data-section='recordCatchCard']");
+        var rowElems = {};
+        var rowState = {};
+        var trapTypesObj = {};
+        var animalsObj = {};
+        var trapperObj = {};
+        var cardSelected;
+        var hoursTime = 5 * 60 * 1000;
+        var filterInterval = 0.5 * 1000; // run filter after half a second if new info is received.
+        var currentTrapperFilter = "all";
+        var defaultTrapper = "default";
+
+
+        function filterNewInfo() {
+            if (!waitingForFilter && newInfo) {
+                filterTrappers({ value: currentTrapperFilter });
+                newInfo = false;
+            }
+        }
+
+
+        /**
+         * Sets the device status icon for the ats device.
+         * States: sleep, active, disabled. 
+         * 
+         * @param {eventData} - Expects an object containing .id which represents which card it would like to update
+         * and .mode representing what state the device is in. The .mode should be either 'sleep', 'active', or 'disabled'. 
+         */
+        function setDeviceStatus(eventData) {
+            if (typeof eventData.value.mode !== "string") {
+                throw new TypeError(`Device mode input must be of type 'string'. Found '${typeof eventData.value}'.`);
+            }
+
+            if (typeof eventData.value.id !== "string") {
+                throw new TypeError(`Device id must be of type 'string;. Found '${typeof eventData.value}'.`);
+            }
+
+            if (typeof rowElems[eventData.value.id] === "undefined") {
+                throw new TypeError(`Card not found for id '${eventData.value.id}'`);
+            }
+
+            let card = rowElems[eventData.value.id];
+            let deviceMode = card.querySelector("[data-section='deviceStatus']");
+
+            if (typeof deviceModeIcon === "undefined") {
+                throw new TypeError(`Card id '${eventData.value.id}' does not support device mode.`);
+            }
+
+            const validInputs = ["sleep", "active", "disabled"];
+
+            if (validInputs.indexOf(eventData.value.mode.toLowerCase()) === -1) {
+                throw new TypeError(`Device status must either be 'disabled', 'sleep', 'or active'. Found ${eventData.value}`);
+            }
+            
+            switch (eventData.value.toLowerCase()) {
+                case "sleep":
+                    deviceMode.innerHTML = "nightlight_round"; 
+                    deviceMode.style.setProperty("visibility", "visible"); 
+                    break;  
+                case "active":
+                    deviceMode.style.setProperty("visibility", "hidden");
+                    break;
+                case "disabled":
+                    deviceMode.innerHTML = "flash_off";
+                    deviceMode.style.setProperty("visibility", "visible");
+                    break;
+            }
+        }
+
+        /**
+       * Clears all bound rows to the active grid.
+       *
+       * @param id - id of the specific card to be updated.
+       */
+        function clearContent(packet) {
+            rowElems = {};
+            rowState = {};
+            trapTypesObj = {};
+            animalsObj = {};
+            trapperObj = {};
+            cardSelected = undefined;
+            currentTrapperFilter = "all";
+            var getParent = document.getElementById("tbody");
+            getParent.innerHTML = "";
+        }
+
+        /**
+         * Updates all the hours of the cards. If an Id is given, only the specified card will be updated.
+         *
+         * @param id - id of the specific card to be updated.
+         */
+        function updateHours(id) {
+            var rowKeys = Object.keys(rowElems);
+            for (var i = 0; i < rowKeys.length; i++) {
+                var j;
+                if (typeof id !== "undefined") {
+                    j = rowKeys.indexOf(id);
+                    if (j === -1) {
+                        return;
+                    }
+                } else {
+                    j = i;
+                }
+
+                var setTime = parseInt(rowState[rowKeys[j]].settime);
+                setTime = rowState[rowKeys[j]].checktime != null && setTime < parseInt(rowState[rowKeys[j]].checktime) ? parseInt(rowState[rowKeys[j]].checktime) : setTime;
+                var state = parseInt(rowState[rowKeys[j]].state);
+
+                // May not be set.
+                if (isNaN(setTime) || isNaN(state)) {
+                    continue;
+                }
+
+                if (setTime == undefined) continue;
+                var hours = 0;
+                if (state == 1) {
+                    hours = Math.floor(Math.abs((new Date() - new Date(setTime))) / 36e5);
+                } else if (state == 2 && rowState[rowKeys[j]].triggeredtime) {
+                    hours = Math.floor(Math.abs((new Date() - new Date(parseInt(rowState[rowKeys[j]].triggeredtime)))) / 36e5);
+                }
+                rowElems[rowKeys[j]].querySelector("[data-value='hours']").innerHTML = hours;
+
+                if (typeof id !== "undefined") return;
+            }
+        }
+
+
+        function requestPhoto(event) {
+            fw.fireEvent('request photo pressed', cardSelected.parentElement.parentElement.getAttribute('data-id'));
+            // Change photo color
+            cardSelected.querySelector("[data-info='requestPhoto']").style.setProperty("color", "orange");
+        }
+
+        function removeCard(eventData) {
+            if (typeof eventData.value !== "string") {
+                throw new TypeError("Expected a string but found " + typeof eventData.value);
+            }
+            var id = eventData.value;
+            var state = rowState[id];
+
+            if (typeof state === "undefined") {
+                throw new Error("Card with id '" + id + "' did not exist.");
+            }
+
+            var row = rowElems[id];
+
+            if (typeof row === "undefined") {
+                throw new Error("Row with id '" + id + "' could not be found.");
+            }
+
+            delete rowState[id];
+
+            row.remove();
+
+            delete rowElems[id];
+
+        }
+
+        function setAlertEvent(eventData) {
+            if (typeof eventData.value !== "string") {
+                throw new TypeError("Expected a string but found " + typeof eventData.value);
+            }
+
+            var card = rowElems[eventData.value];
+
+            if (card === undefined) {
+                throw new Error("No card exists with the primary key '" + eventData.value + "'");
+            }
+
+
+            card.parentElement.parentElement.classList = [];
+            card.parentElement.parentElement.classList.add("alertBorder");
+
+        }
+
+        function newPhotoEvent(eventData) {
+            if (typeof eventData.value !== "string") {
+                throw new TypeError("Expected a string but found " + typeof eventData.value);
+            }
+
+            var card = rowElems[eventData.value];
+
+            if (card === undefined) {
+                throw new Error("No card exists with the primary key '" + eventData.value + "'");
+            }
+
+
+            card.querySelector("[data-section='newPhotoIcon']").style.setProperty("visibility", "visible");
+
+            // Reset request photo icon to black if yellow.
+            card.querySelector("[data-info='requestPhoto']")?.style.setProperty("color", "black");
+            card.parentElement.parentElement.classList = [];
+            
+            /*if  (!card.parentElement.parentElement.classList.contains('alertBorder')) {
+                card.parentElement.parentElement.classList.add("newPhotoBorder");
+            }*/
+        }
+
+        /**
+         * takes an array of ids and hides all other card
+         *
+         * @param eventData
+         */
+        function filterCards(eventData) {
+            if (eventData.value === undefined) {
+                // error
+                throw new Error("Filter expected a client event object.");
+                return;
+            }
+
+            if (!Array.isArray(eventData.value)) {
+                throw new TypeError("Filter must be an array. Found " + typeof eventData.value);
+                return
+            }
+
+            var children = tableBody.children;
+
+            for (var i = 0; i < children.length; i++) {
+                if (eventData.value.indexOf(children[i].getAttribute("data-id")) === -1) {
+                    children[i].style.setProperty("display", "none");
+                } else {
+                    children[i].style.setProperty("display", "");
+                }
+            }
+            waitingForFilter = false;
+        }
+
+
+        /**
+         * When the address is clicked in a card the card will broadcast an event with the given ID.
+         * @param event
+         */
+        function addressEvent(event) {
+            // get card id
+            var id = event.currentTarget.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.getAttribute("data-id");
+            fw.fireEvent("address pressed", id);
+            event.stopPropagation();
+        }
+
+
+        function setDefaultTrapper(event) {
+            var trapper = event.value;
+
+            if (typeof trapper !== "string") {
+                throw new Error("Trapper must be of type 'string', found " + typeof trapper + " instead.");
+            }
+
+            defaultTrapper = trapper;
+        }
+
+
+        /**
+         * Sets all the trap options available for the card.
+         *
+         * @param packet
+         */
+        function setTrapTypes(packet) {
+            var values = packet;
+            if (typeof packet === "object" && packet.value !== undefined) {
+                values = packet.value;
+            }
+
+            if (!Array.isArray(values)) {
+                throw new TypeError("set trap type event expected an array but found '" + typeof values + "'.");
+            }
+
+            var optionsArray = [];
+            var joinArray = [];
+
+            for (var i = 0; i < values.length; i++) {
+                if (trapTypesObj[values[i]] === undefined) {
+                    joinArray.push(values[i]);
+                }
+            }
+
+            for (var i = 0; i < joinArray.length; i++) {
+                var opElem = document.createElement("option");
+                opElem.innerHTML = joinArray[i];
+                opElem.style.setProperty("text-transform", "capitalize");
+                opElem.value = joinArray[i];
+                optionsArray.push(opElem)
+                trapTypesObj[joinArray[i]] = opElem;
+            }
+
+
+            var select = formDiv.querySelector("[data-select='trapType']");
+            for (var i = 0; i < optionsArray.length; i++) {
+                select.appendChild(optionsArray[i]);
+            }
+            var def = select.querySelector("[value='default']");
+            def.selected = true;
+            def.disabled = true;
+        }
+
+        const SEARCH_ENUMS = {
+            0: "UNASSIGNED", // state 0
+            1: "SET", // state 1
+            2: "TRIGGERED" // state 2
+        }
+
+        function search(inputString) {
+            // Filter states to see if anything fits
+            var stateKeys = filteredCards;
+            var results = stateKeys.filter(function (key) {
+                var row = rowState[key];
+
+                var objKeys = Object.keys(row);
+                for (var i = 0; i < objKeys.length; i++) {
+                    if (typeof row[objKeys[i]] === "string" && row[objKeys[i]].toUpperCase().indexOf(inputString.toUpperCase()) !== -1) {
+                        return true;
+                    }
+                }
+
+                if (SEARCH_ENUMS[row.state].indexOf(inputString.toUpperCase()) !== -1) {
+                    return true;
+                }
+
+                return false;
+            });
+
+            filterCards({
+                value: results
+            });
+        }
+
+
+        /**
+         * Sets all the trappers available for the card dropdown.
+         *
+         * @param packet
+         */
+        function setTrappers(packet) {
+            var values = packet;
+            if (typeof packet === "object" && packet.value !== undefined) {
+                values = packet.value;
+            }
+
+            if (!Array.isArray(values)) {
+                throw new TypeError("set trappers event expected an array but found '" + typeof values + "'.");
+            }
+
+            var optionsArray = [];
+            var joinArray = [];
+
+            for (var i = 0; i < values.length; i++) {
+                if (trapperObj[values[i]] === undefined) {
+                    joinArray.push(values[i]);
+                }
+            }
+
+            for (var i = 0; i < joinArray.length; i++) {
+                var opElem = document.createElement("option");
+                opElem.innerHTML = joinArray[i];
+                opElem.style.setProperty("text-transform", "capitalize");
+                opElem.value = joinArray[i];
+                optionsArray.push(opElem)
+                trapperObj[joinArray[i]] = opElem;
+            }
+
+            var select = formDiv.querySelector("[data-select='trapper']");
+            for (var i = 0; i < optionsArray.length; i++) {
+                select.appendChild(optionsArray[i]);
+            }
+            select.querySelector("[value='default']").selected = true;
+
+        }
+
+
+        function toggleCardEvent(packet) {
+
+            var id = packet.value;
+            if (typeof id !== "string") {
+                return;
+            }
+
+            if (rowElems[id] === undefined) {
+                return;
+            }
+
+            var card = rowElems[id];
+            toggleClearScreen(card.querySelector("[data-section='main']"))
+        }
+
+        var filteredCards = Object.keys(rowState);
+        function filterTrappers(eventData) {
+            var trapper = eventData.value;
+            currentTrapperFilter = trapper;
+            var stateKeys = Object.keys(rowState);
+            filteredCards = stateKeys.filter(function (key) {
+                if (eventData.value.toLowerCase() === "all") return true;
+                if (eventData.value.toLowerCase() === "unassigned" && rowState[key].state == 0) return true;
+                if (rowState[key].trapper) {
+                    return (rowState[key].trapper.toLowerCase() === trapper.toLowerCase() && rowState[key].state != 0);
+                }
+            });
+
+            filterCards({
+                value: filteredCards
+            });
+        }
+
+
+
+        /**
+         * Sets all the animals available for the card.
+         *
+         * @param packet
+         */
+        function setAnimals(packet) {
+            var values = packet;
+            if (typeof packet === "object" && packet.value !== undefined) {
+                values = packet.value;
+            }
+
+            if (!Array.isArray(values)) {
+                throw new TypeError("set animals event expected an array but found '" + typeof values + "'.");
+            }
+
+            var optionsArray = [];
+            var joinArray = [];
+
+            for (var i = 0; i < values.length; i++) {
+                if (animalsObj[values[i]] === undefined) {
+                    joinArray.push(values[i]);
+                }
+            }
+
+            for (var i = 0; i < joinArray.length; i++) {
+                var opElem = document.createElement("option");
+                opElem.innerHTML = joinArray[i];
+                opElem.value = joinArray[i];
+                optionsArray.push(opElem)
+                animalsObj[joinArray[i]] = opElem;
+            }
+
+            var select = formDiv.querySelector("[data-select='animalType']");
+            for (var i = 0; i < optionsArray.length; i++) {
+                select.appendChild(optionsArray[i]);
+            }
+            select.querySelector("[value='default']").selected = true;
+
+        }
+
+        function showGenericForm(id, state) {
+            // Hide Location Form and Submit File Input
+            formDiv.querySelector(".location-form").style.setProperty("display", "none");
+            formDiv.querySelector("button[data-form='file']").style.setProperty("display", "none");
+            state = parseInt(state);
+
+            switch (state) { //  0: inactive, 1: set, 2: triggered.
+                case 0:
+                    cardSelected.querySelector("[data-button='submitButton']").innerHTML = "SET";
+                    cardSelected.querySelector("[data-button='submitButton']").style.setProperty("background-color", "");
+                    var trapTypeSelect = cardSelected.querySelector("[data-select='trapType']");
+
+                    trapTypeSelect.removeAttribute("disabled");
+                    cardSelected.querySelector("[data-button='updateLocation']").style.setProperty("display", "block");
+                    cardSelected.querySelector("[data-select='animalType']").setAttribute("disabled", "disabled");
+                    cardSelected.querySelector("[data-select='animalType']").style.setProperty("display", "none");
+
+                    // Hide form qs
+                    cardSelected.querySelector("[data-form='notes']").style.setProperty("display", "none");
+                    cardSelected.querySelector("[data-form='age']").style.setProperty("display", "none");
+                    cardSelected.querySelector("[data-form='subspecies']").style.setProperty("display", "none");
+                    cardSelected.querySelector("[data-select='sex']").style.setProperty("display", "none");
+
+                    cardSelected.querySelector("[data-form='notes']").style.setProperty("display", "");
+                    cardSelected.querySelector("[data-form='catchNotes']").style.setProperty("display", "none");
+
+                    // Display notes
+                    /*
+                    if (rowState[id].notes && rowState[id] !== "") {
+                        cardSelected.querySelector("[data-section='notes']").style.setProperty("display", "flex");
+                        cardSelected.querySelector("[data-value='notes']").innerHTML = rowState[id].notes
+                    } else {
+                        cardSelected.querySelector("[data-section='notes']").style.setProperty("display", "none");
+                    }
+                    */
+
+                    var trapTypeSelect = cardSelected.querySelector("[data-select='trapType']");
+                    trapTypeSelect.disabled = false;
+                    trapTypeSelect.style.setProperty("display", "");
+
+                    cardSelected.querySelector("[data-form='lure']").disabled = false;
+                    cardSelected.querySelector("[data-form='lure']").style.setProperty("display", "");
+                    cardSelected.querySelector("[data-form='lure']").value = "";
+                    cardSelected.querySelector("[data-form='notes']").value = "";
+                    setSelect("trapper", defaultTrapper);
+
+                    formDiv.querySelector("[data-form='atsmode']").disabled = false;
+                    formDiv.querySelector("[data-form='tasid']").disabled = false;
+
+                    break;
+                case 1:
+                    cardSelected.querySelector("[data-button='submitButton']").innerHTML = "SAVE";
+                    if (rowState[id].cardType == "VTRAP") {
+                        cardSelected.querySelector("[data-button='submitButton']").innerHTML = "RECORD CATCH";
+                    }
+                    cardSelected.querySelector("[data-button='submitButton']").style.setProperty("background-color", "");
+                    var trapTypeSelect = cardSelected.querySelector("[data-select='trapType']");
+
+                    formDiv.querySelector("[data-form='atsmode']").disabled = true;
+                    formDiv.querySelector("[data-form='tasid']").disabled = true;
+
+                    // Hide qs
+                    // Show form qs
+                    cardSelected.querySelector("[data-form='notes']").style.setProperty("display", "");
+                    cardSelected.querySelector("[data-form='age']").style.setProperty("display", "");
+                    cardSelected.querySelector("[data-form='subspecies']").style.setProperty("display", "");
+                    cardSelected.querySelector("[data-select='sex']").style.setProperty("display", "");
+
+                    if (rowState[id].traptype !== undefined) {
+                        trapTypeSelect.value = rowState[id].traptype;
+                    }
+
+                    cardSelected.querySelector("[data-form='job']").value = rowState[id].jobid;
+
+                    trapTypeSelect.setAttribute("disabled", "disabled");
+
+                    cardSelected.querySelector("[data-select='animalType']").removeAttribute("disabled");
+                    cardSelected.querySelector("[data-select='animalType']").style.setProperty("display", "");
+
+                    cardSelected.querySelector("[data-form='notes']").style.setProperty("display", "");
+                    cardSelected.querySelector("[data-form='notes']").value = rowState[id].notes == null ? "" : rowState[id].notes
+
+                    cardSelected.querySelector("[data-form='catchNotes']").style.setProperty("display", "");
+
+                    cardSelected.querySelector("[data-value='triggeredTimeFormatted'").innerHTML = "-";
+
+                    cardSelected.querySelector("[data-form='lure']").disabled = true;
+                    cardSelected.querySelector("[data-form='lure']").value = rowState[id].lure == null ? "" : rowState[id].lure
+
+                    break;
+                case 2:
+                    cardSelected.querySelector("[data-button='submitButton']").innerHTML = "SAVE";
+                    cardSelected.querySelector("[data-button='submitButton']").style.setProperty("background-color", "darkred");
+
+                    // Show form qs
+                    cardSelected.querySelector("[data-form='notes']").style.setProperty("display", "");
+                    cardSelected.querySelector("[data-form='age']").style.setProperty("display", "");
+                    cardSelected.querySelector("[data-form='subspecies']").style.setProperty("display", "");
+                    cardSelected.querySelector("[data-select='sex']").style.setProperty("display", "");
+
+                    var trapTypeSelect = cardSelected.querySelector("[data-select='trapType']");
+                    if (rowState[id].traptype !== undefined) {
+                        trapTypeSelect.value = rowState[id].traptype;
+                    }
+
+                    cardSelected.querySelector("[data-form='job']").value = rowState[id].jobid;
+
+                    cardSelected.querySelector("[data-select='animalType']").removeAttribute("disabled");
+                    cardSelected.querySelector("[data-select='animalType']").style.setProperty("display", "");
+
+                    cardSelected.querySelector("[data-form='notes']").style.setProperty("display", "");
+                    cardSelected.querySelector("[data-form='notes']").value = rowState[id].notes == null ? "" : rowState[id].notes
+                    cardSelected.querySelector("[data-form='catchNotes']").style.setProperty("display", "");
+
+                    trapTypeSelect.setAttribute("disabled", "disabled");
+                    cardSelected.querySelector("[data-select='animalType']").removeAttribute("disabled");
+
+                    cardSelected.querySelector("[data-form='lure']").disabled = true;
+                    cardSelected.querySelector("[data-form='lure']").value = rowState[id].lure == null ? "" : rowState[id].lure
+
+
+                    
+                    break;
+            }
+
+            cardSelected.querySelector("[data-form='catchNotes']").value = "";
+        }
+
+        function showVirtualForm(id, state) {
+            //formDiv.querySelector(".location-form").style.setProperty("display", "flex");
+            state = parseInt(state);
+            switch (state) {
+                case 0:
+                    formDiv.querySelector("button[data-form='file']").style.setProperty("display", "block");
+                    break;
+                case 1:
+                    cardSelected.querySelector("[data-button='submitButton']").innerHTML = "SAVE";
+                    formDiv.querySelector("[data-button='updateLocation']").style.setProperty("display", "none");
+                    break;
+                case 2:
+                    break;
+            }
+
+        }
+
+        function showCameraForm(id, state) {
+            state = parseInt(state);
+            switch (state) {
+                case 0:
+                    cardSelected.querySelector("[data-button='clearButton']").innerHTML = "SET";
+                    break;
+                case 1:
+                    cardSelected.querySelector("[data-button='clearButton']").innerHTML = "RECORD CATCH";
+                    cardSelected.querySelector("[data-button='submitButton']").innerHTML = "SAVE";
+                    break;
+                case 2:
+                    break;
+            }
+        }
+
+        function showTrapForm(id, state) {
+            state = parseInt(state);
+            switch (state) {
+                case 0:
+                    break;
+                case 1:
+                    break;
+                case 2:
+                    break;
+            }
+        }
+
+        function showCameraTrapForm(id, state) {
+            state = parseInt(state);
+            switch (state) {
+                case 0:
+                    break;
+                case 1:
+                    break;
+                case 2:
+                    break;
+            }
+        }
+
+        function showAtsTrapForm(id, state) {
+            state = parseInt(state);
+            switch (state) {
+                case 0:
+                    break;
+                case 1:
+                    break;
+                case 2:
+                    break;
+            }
+        }
+
+        function uploadFile(event) {
+            formDiv.querySelector("input[data-form='file']").click();
+        }
+
+        function setSelect(select, option, disabled) {
+            var selectElem = formDiv.querySelector("[data-select='" + select + "'");
+            option = option == null || option == "" ? "default" : option;
+            var optionElem = selectElem.querySelector("[value='" + option + "']");
+            if (optionElem != null) {
+                optionElem.selected = true;
+            }
+            if (disabled) {
+                selectElem.disabled = true;
+            } else {
+                selectElem.disabled = false;
+            }
+        }
+
+        function setInput(input, text) {
+            var elem = formDiv.querySelector("[data-form='" + input + "']");
+            text = (text == null) ? "" : text;
+            elem.value = text;
+        }
+
+        function clearForm(id) {
+            setSelect("trapType", rowState[id].trapType);
+            setSelect("age", rowState[id].age);
+            setSelect("trapper", rowState[id].trapper);
+            setSelect("animalType", rowState[id].animaltype);
+            setSelect("sex", rowState[id].sex);
+
+            formDiv.querySelector("[data-form='subspecies']").value = "";
+            formDiv.querySelector("[data-form='catchNotes']").value = rowState[id].catchnotes == null ? "" : rowState[id].catchnotes;
+            formDiv.querySelector("[data-form='job']").value = rowState[id].jobid == null ? "" : rowState[id].jobid;
+            formDiv.querySelector("[data-form='lat']").innerText = rowState[id].lat == null ? "-" : rowState[id].lat;
+            formDiv.querySelector("[data-form='lon']").innerText = rowState[id].lon == null ? "-" : rowState[id].lon;
+            formDiv.querySelector("[data-form='lure']").value = rowState[id].lure == null ? "" : rowState[id].lure;
+            formDiv.querySelector("[data-select='sex']").value = "default";
+            formDiv.querySelector("[data-select='animalType']").value = "default";
+            formDiv.querySelector("[data-select='age']").value = "default";
+
+            formDiv.querySelector("input[data-form='file']").value = null;
+        }
+
+        /**
+         * Shows the dropdown menu screen.
+         *
+         * @param event
+         */
+        function showFormScreen(event) {
+            var container = document.getElementById("container");
+
+            if (event.currentTarget.getAttribute("data-button") === "recordCatch") {
+                // cancel form screen of open card.
+                cancelFormScreen();
+                //close other card
+                if (cardSelected !== undefined) {
+                    cardSelected.querySelector("[data-section='clearScreen']").style.setProperty("display", "none");
+                }
+
+
+
+                // Set form elements to defaults.
+                setSelect("trapType");
+                setSelect("trapper", defaultTrapper);
+                setSelect("animalType");
+                setSelect("sex");
+                setSelect("age");
+
+                setInput("job");
+                setInput("lat");
+                setInput("lon");
+                setInput("subspecies");
+                setInput("catchNotes");
+                setInput("notes");
+                setInput("lure");
+
+                // Set form elements visible/invisible
+                formDiv.querySelector(".location-form").style.setProperty("display", "none");
+                formDiv.querySelector("[data-button='updateLocation']").style.setProperty("display", "none");
+                formDiv.querySelector("button[data-form='file']").style.setProperty("display", "none");
+                formDiv.querySelector("[data-form='atsmode']").style.setProperty("display", "none");
+                formDiv.querySelector("[data-form='tasid']").style.setProperty("display", "none");
+
+
+                formDiv.querySelector("[data-form='job']").style.setProperty("display", "unset");
+                formDiv.querySelector("[data-select='trapType']").style.setProperty("display", "unset");
+                formDiv.querySelector("[data-select='trapper']").style.setProperty("display", "unset");
+                formDiv.querySelector("[data-select='animalType']").style.setProperty("display", "unset");
+                formDiv.querySelector("[data-select='sex']").style.setProperty("display", "unset");
+                formDiv.querySelector("[data-form='age']").style.setProperty("display", "unset");
+                formDiv.querySelector("[data-form='subspecies']").style.setProperty("display", "unset");
+                formDiv.querySelector("[data-form='lure']").style.setProperty("display", "unset");
+
+                formDiv.querySelector("[data-form='catchNotes']").style.setProperty("display", "unset");
+                formDiv.querySelector("[data-form='notes']").style.setProperty("display", "unset");
+
+                //updateLocation();
+                //value.lat = formDiv.querySelector("[data-form='lat']").innerText;
+                //value.lon = formDiv.querySelector("[data-form='lon']").innerText;
+
+                // Change submit button text
+                document.querySelector("[data-button='submitButton']").innerText = "SAVE";
+
+                // Make visible
+                recordCatchCard.style.setProperty("display", "");
+                // Attach formDiv
+                recordCatchCard.appendChild(formDiv);
+
+                // Make visible
+                formDiv.style.setProperty("display", "");
+                // Scroll to top
+                container.scrollTop = 0;
+                return;
+            }
+
+            event.currentTarget.parentNode.parentNode.parentNode.parentNode.parentNode.querySelector("[data-section='main']").appendChild(formDiv);
+            // Hide check button
+            event.currentTarget.style.setProperty("display", "none");
+            cardSelected.querySelector("[data-button='deactivateButton']").style.setProperty("display", "none");
+
+            formDiv.style.setProperty("display", '');
+
+            var id = formDiv.parentElement.parentElement.parentElement.parentElement.getAttribute("data-id");
+            var state = rowState[id].state;
+
+            if (rowState[id].cardType === "VTRAP") {
+                cardSelected.querySelector("[data-button='checkButton']").style.setProperty("display", "none");
+            }
+
+            if (rowState[id].cardType !== "ATS") {
+                formDiv.querySelector("[data-form='atsmode']").style.setProperty("display", "none");
+                formDiv.querySelector("[data-form='tasid']").style.setProperty("display", "none");
+            } else {
+                formDiv.querySelector("[data-form='atsmode']").style.setProperty("display", "block");
+                formDiv.querySelector("[data-form='tasid']").style.setProperty("display", "block");
+            }
+
+            // Clear form
+            clearForm(id);
+            switch (rowState[id].cardType) {
+                case "CAMERA":
+                    showGenericForm(id, state);
+                    showCameraForm(id, state);
+                    break;
+                case "TRAP":
+                    showGenericForm(id, state);
+                    showTrapForm(id, state);
+                    break;
+                case "VTRAP": rowState[id].lat =
+                    showGenericForm(id, state);
+                    showVirtualForm(id, state);
+                    break;
+                case "CAMERATRAP":
+                    showGenericForm(id, state);
+                    showCameraTrapForm(id, state);
+                    break;
+                case "ATS":
+                    showGenericForm(id, state);
+                    showAtsTrapForm(id, state);
+            }
+
+            // Offset is the amount of the card that is hidden. 40 = footer
+            if (formDiv.offsetHeight + 50 + cardSelected.offsetTop < container.offsetHeight) {
+                var offset = (cardSelected.offsetTop + cardSelected.offsetHeight + 50 - container.scrollTop) - container.offsetHeight;
+                // Set the container scroll top so the bottom of the card is at the bottom of the container.
+                container.scrollTop += offset;
+                if (1 > container.offsetHeight) {
+                    container.scrollTop = cardSelected.offsetHeight + cardSelected.offsetTop;
+                }
+            }
+            event.stopPropagation();
+        }
+
+
+        /**
+         * Closes the downdown menu screen.
+         * @param event
+         */
+        function cancelFormScreen(event) {
+            //
+            if (formDiv.parentNode === recordCatchCard) {
+                formDiv.style.setProperty("display", "none");
+                if (event) {
+                    event.stopPropagation();
+                }
+                return;
+            }
+
+            if (cardSelected === undefined) {
+                if (event !== undefined) {
+                    event.stopPropagation();
+                }
+                return;
+            }
+
+            if (cardSelected.parentNode.parentNode != null) {
+                var id = cardSelected.parentNode.parentNode.getAttribute("data-id");
+                setState(id, parseInt(rowState[id].state));
+                //cardSelected.querySelector("[data-section='formScreen']").style.setProperty("display", "none");
+
+                // If triggered show just clear, else show deactivate as well.
+                cardSelected.querySelector("[data-button='clearButton']").style.setProperty("display", "");
+            }
+
+            if (event) {
+                event.stopPropagation();
+            }
+            formDiv.style.setProperty("display", "none");
+        }
+
+        /**
+         * update location of trap using phone GPS
+         * @param event
+         */
+        function updateLocation(event) {
+            //var id=cardSelected.parentNode.parentNode.getAttribute("data-id");
+            //var selectedCard = cardSelected;
+            function callbackPlotHole(id, cardSelected) {
+                return function (e) {
+                    //var packet = {
+                    //    id: id,
+                    //    lat: e.coords.latitude,
+                    //    lon: e.coords.longitude
+                    //}
+                    formDiv.querySelector("[data-form='lat']").innerText = e.coords.latitude.toString();
+                    formDiv.querySelector("[data-form='lon'").innerText = e.coords.longitude.toString();
+                    //fw.fireEvent("update location pressed", packet);
+                };
+            }
+
+            if (navigator.geolocation) {
+                var options = {
+                    enableHighAccuracy: true,
+                    timeout: 5000,
+                    maximumAge: 0
+                };
+                navigator.geolocation.getCurrentPosition(
+                    callbackPlotHole(),
+                    callbackPlotHole(),
+                    options);
+            }
+        }
+
+        /**
+         * Deactivates a trap
+         *
+         * @param event
+         */
+        function deactivateTrap(event) {
+            // get trap ID
+            var id = cardSelected.parentNode.parentNode.getAttribute("data-id");
+            // build sensacollection of card
+            fw.fireEvent("deactivate trap", Object.assign({}, rowState[id]));
+            setState(id, 0);
+
+        }
+
+        function updateCheckTime(event) {
+            var id = event.currentTarget.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.getAttribute("data-id");
+
+            var dt = new Date();
+            rowState[id].checktime = dt.getTime();
+
+            var d = dt.toLocaleString('en-GB').split(", ");
+            var d0 = d[0].split("/");
+            d0[2] = Math.abs(d0[2] - 2000);
+            d0 = d0.join("/");
+            rowElems[id].querySelector("[data-value='checkTimeFormatted']").innerHTML = d[1] + "<br />" + d0;
+            fw.fireEvent("check trap", Object.assign({}, rowState[id]));
+
+            updateHours(id);
+        }
+
+
+
+        /**
+         * Broadcasts an event when a trap is set or cleared.
+         *
+         * @param event
+         */
+        function submitTrap(event) {
+            if (event.currentTarget.parentNode.parentNode.parentNode === recordCatchCard) {
+                var value = {
+                    id: "custom",
+                    jobid: null,
+                    battery: null,
+                    temp: null,
+                    signal: null,
+                    sensorbattery: null,
+                    traptype: null,
+                    trapper: null,
+                    settime: null,
+                    updatetime: null,
+                    checktime: null,
+                    triggeredtime: null,
+                    notes: null,
+                    viewed: null,
+                    alert: null,
+                    state: null,
+                    catchnotes: null,
+                    age: null,
+                    subspecies: null,
+                    sex: null,
+                    animaltype: null,
+                    lat: null,
+                    lon: null,
+                    file: null,
+                    cardType: null,
+                    model: null,
+                    lure: null
+                }
+
+                if (formDiv.querySelector("[data-select='trapper']").value == "default") {
+                    alert("Please select a trapper and trap type.");
+                    return;
+                }
+
+                value.jobid = formDiv.querySelector("[data-form='job']").value.toUpperCase();
+                value.traptype = formDiv.querySelector("[data-select='trapType']").value;
+                value.trapper = formDiv.querySelector("[data-select='trapper']").value;
+                value.animaltype = formDiv.querySelector("[data-select='animalType']").value;
+                value.sex = formDiv.querySelector("[data-select='sex']").value;
+                value.age = formDiv.querySelector("[data-form='age']").value;
+                value.subspecies = formDiv.querySelector("[data-form='subspecies']").value;
+                value.lure = formDiv.querySelector("[data-form='lure']").value;
+
+                value.catchnotes = formDiv.querySelector("[data-form='catchNotes']").value;
+                value.notes = formDiv.querySelector("[data-form='notes']").value;
+
+                value.file = formDiv.querySelector("input[data-form='file'").files[0];
+                value.settime = value.updatetime = value.checktime = value.triggeredtime = new Date().getTime();
+
+                updateLocation();
+                value.lat = formDiv.querySelector("[data-form='lat']").innerText;
+                value.lon = formDiv.querySelector("[data-form='lon']").innerText;
+
+
+                fw.fireEvent("record catch", Object.assign({}, value));
+                formDiv.style.setProperty("display", "none");
+                return;
+            }
+            var id = cardSelected.parentNode.parentNode.getAttribute("data-id");
+            var state = rowState[id].state;
+
+            // 0 = SET; 1 = CHECK;
+            if (state == 0) {
+
+                if (formDiv.querySelector("[data-select='trapType']").value == "default") {
+                    alert("Please select a trap type.");
+                    return;
+                }
+
+                rowState[id].jobid = formDiv.querySelector("[data-form='job']").value;
+                rowState[id].trapper = formDiv.querySelector("[data-select='trapper']").value;
+                rowState[id].traptype = formDiv.querySelector("[data-select='trapType']").value;
+                rowElems[id].querySelector("[data-value='trapper']").innerHTML = rowState[id].trapper;
+                rowElems[id].querySelector("[data-value='traptype']").innerHTML = rowState[id].traptype;
+                var dt = new Date()
+                rowState[id].settime = dt.getTime();
+
+                // set the triggered time to be null, so it does not appear next time
+                rowState[id].triggeredtime = null;
+                // rowElems[id].querySelector("[data-value='triggeredTimeFormatted']").innerHTML = rowState[id];
+
+                var d = dt.toLocaleString('en-GB').split(", ");
+                var d0 = d[0].split("/");
+                d0[2] = Math.abs(d0[2] - 2000);
+                d0 = d0.join("/");
+
+                rowState[id].notes = formDiv.querySelector("[data-form='notes']").value;
+
+                rowElems[id].querySelector("[data-value='setTimeFormatted']").innerHTML = d[1] + "<br />" + d0;
+
+                // Lure input
+                rowState[id].lure = formDiv.querySelector("[data-form='lure']").value;
+
+                // Virtual Trap Specific
+                if (rowState[id].cardType === "VTRAP") {
+                    rowState[id].lat = formDiv.querySelector("[data-form='lat']").innerText;
+                    rowState[id].lon = formDiv.querySelector("[data-form='lon']").innerText;
+                    rowState[id].file = formDiv.querySelector("input[data-form='file'");
+                    if (rowState[id].file.files !== null) {
+                        rowState[id].file = rowState[id].file.files[0];
+                    }
+                }
+
+                var retObj = Object.assign({}, rowState[id]);
+
+                setState(id, 1);
+
+                fw.fireEvent("set trap", retObj);
+            } else if (state == 1) {
+                var dt = new Date();
+                rowState[id].checktime = dt.getTime();
+                rowState[id].catchnotes = formDiv.querySelector("[data-form='catchNotes']").innerHTML;
+
+                var d = dt.toLocaleString('en-GB').split(", ");
+                var d0 = d[0].split("/");
+                d0[2] = Math.abs(d0[2] - 2000);
+                d0 = d0.join("/");
+                rowElems[id].querySelector("[data-value='checkTimeFormatted']").innerHTML = d[1] + "<br />" + d0;
+
+                rowState[id].catchnotes = formDiv.querySelector("[data-form='catchNotes']").value;
+                rowState[id].jobid = formDiv.querySelector("[data-form='job']").value.toUpperCase();
+                rowState[id].age = formDiv.querySelector("[data-form='age']").value;
+                rowState[id].sex = formDiv.querySelector("[data-select='sex']").value;
+                rowState[id].subspecies = formDiv.querySelector("[data-form='subspecies']").value;
+                rowState[id].notes = formDiv.querySelector("[data-form='notes']").value;
+                rowState[id].animaltype = formDiv.querySelector("[data-select='animalType']").value;
+
+                rowState[id].trapper = formDiv.querySelector("[data-select='trapper']").value;
+                rowState[id].traptype = formDiv.querySelector("[data-select='trapType']").value;
+                rowElems[id].querySelector("[data-value='trapper']").innerHTML = rowState[id].trapper;
+                rowElems[id].querySelector("[data-value='traptype']").innerHTML = rowState[id].traptype;
+
+                if (rowState[id].cardType === "VTRAP") {
+                    rowState[id].file = formDiv.querySelector("input[data-form='file'").files[0];
+                }
+
+                rowState[id].lure = formDiv.querySelector("[data-form='lure']").value;
+                var retObj = Object.assign({}, rowState[id]);
+                if (rowState[id].cardType === "VTRAP") {
+                    fw.fireEvent("clear trap", retObj);
+                } else {
+                    fw.fireEvent("check trap", retObj);
+                }
+                setState(id, 1);
+            } else {
+                if (formDiv.querySelector("[data-select='animalType']").value == "default") {
+                    alert("Please select an animal type.");
+                    return;
+                }
+
+                if (formDiv.querySelector("[data-select='sex']").value == "default") {
+                    alert("Please select the animal's sex.");
+                    return;
+                }
+
+                rowState[id].catchnotes = formDiv.querySelector("[data-form='catchNotes']").value;
+                rowState[id].jobid = formDiv.querySelector("[data-form='job']").value.toUpperCase();
+                rowState[id].age = formDiv.querySelector("[data-form='age']").value;
+                rowState[id].sex = formDiv.querySelector("[data-select='sex']").value;
+                rowState[id].subspecies = formDiv.querySelector("[data-form='subspecies']").value;
+                rowState[id].notes = formDiv.querySelector("[data-form='notes']").value;
+                rowState[id].animaltype = formDiv.querySelector("[data-select='animalType']").value;
+
+                rowState[id].trapper = formDiv.querySelector("[data-select='trapper']").value;
+                rowState[id].traptype = formDiv.querySelector("[data-select='trapType']").value;
+                rowElems[id].querySelector("[data-value='trapper']").innerHTML = rowState[id].trapper;
+                rowElems[id].querySelector("[data-value='traptype']").innerHTML = rowState[id].traptype;
+
+                var retObj = Object.assign({}, rowState[id]);
+
+                fw.fireEvent("clear trap", retObj);
+                setState(id, 0);
+            }
+            formDiv.style.setProperty("display", "none");
+            updateHours(id);
+        }
+
+
+
+        /**
+         * Sets the card state to either triggered (2), set (1), or deactivated (0)
+         *
+         * @param id - id of the card to be modified.
+         * @param value {number} - state to change the card to.
+         */
+        function setState(id, value) {
+            if (typeof value !== "number") {
+                throw new TypeError("Value must be a number, found '" + typeof value + "'.");
+            }
+            if (value > 2 || value < 0) {
+                throw new Error("State value must either 0, 1, 2. Found " + value);
+            }
+
+            var card = rowElems[id];
+            var icon = card.querySelector("[data-info='icon']");
+            var hours = card.querySelector("[data-value='hours']");
+            icon.classList.remove("greenIcon");
+            icon.classList.remove("redIcon");
+            icon.classList.remove("greyIcon");
+
+            switch (value) {
+                case 0:
+                    icon.classList.add("greyIcon");
+                    hours.style.setProperty("visibility", "hidden");
+                    card.querySelector("[data-button='deactivateButton']").style.setProperty("display", "none");
+                    card.querySelector("[data-button='clearButton']").style.setProperty("display", "");
+                    card.querySelector("[data-button='clearButton']").innerHTML = "SET";
+                    card.querySelector("[data-button='clearButton']").style.setProperty("background-color", "");
+
+                    card.querySelector("[data-button='deactivateButton']").style.setProperty("display", "none");
+                    card.querySelector("[data-value='triggeredTimeFormatted'").innerHTML = "-";
+                    card.querySelector("[data-value='setTimeFormatted']").innerHTML = "-";
+                    card.querySelector("[data-value='checkTimeFormatted']").innerText = "-";
+
+                    card.querySelector("[data-section='notes']").style.setProperty("display", "none");
+
+                    rowState[id].trapper = null;
+                    rowState[id].traptype = null;
+                    rowState[id].settime = null;
+                    rowState[id].triggeredtime = null;
+                    rowState[id].checktime = null;
+                    rowState[id].jobid = null;
+                    rowState[id].notes = null;
+                    rowState[id].catchnotes = null;
+
+                    formDiv.querySelector("[data-form='notes']").innerText = "";
+                    card.querySelector("[data-value='hours']").innerText = "";
+                    if (rowState[id].cardType === "VTRAP") {
+                        card.querySelector("[data-button='checkButton']").style.setProperty("display", "none");
+                    }
+
+                    var trapSection = card.querySelector("[data-section='right-section']");
+
+                    if (trapSection != null) {
+                        trapSection.style.setProperty("display", "none");
+                    }
+
+                    break;
+                case 1:
+                    var trapSection = card.querySelector("[data-section='right-section']");
+
+                    if (trapSection !== null) {
+                        trapSection.style.setProperty("display", "");
+                    }
+
+                    icon.classList.add("greenIcon");
+                    hours.style.setProperty("visibility", "");
+                    hours.style.setProperty("border", "2px solid green");
+                    hours.style.setProperty("color", "green");
+                    card.querySelector("[data-button='deactivateButton']").style.setProperty("display", "");
+                    card.querySelector("[data-button='clearButton']").innerHTML = "CHECK";
+                    if (rowState[id].cardType === "VTRAP") {
+                        card.querySelector("[data-button='clearButton']").innerHTML = "RECORD CATCH";
+                        card.querySelector("[data-button='checkButton']").style.setProperty("display", "");
+                    }
+                    card.querySelector("[data-button='clearButton']").style.setProperty("display", "");
+                    card.querySelector("[data-button='clearButton']").style.setProperty("background-color", "");
+
+                    // Display notes
+                    if (rowState[id].notes && rowState[id] !== "") {
+                        card.querySelector("[data-section='notes']").style.setProperty("display", "flex");
+                        card.querySelector("[data-value='notes']").innerHTML = rowState[id].notes
+                    } else {
+                        card.querySelector("[data-section='notes']").style.setProperty("display", "none");
+                    }
+
+                    //card.querySelector("[data-button='submitButton']").innerHTML = "CHECK";
+                    //card.querySelector("[data-button='submitButton']").style.setProperty("background-color", "");
+                    //var trapTypeSelect = card.querySelector("[data-select='trapType']");
+
+                    // Hide qs
+                    // Show form qs
+                    //card.querySelector("[data-form='notes']").style.setProperty("display", "");
+                    //card.querySelector("[data-form='age']").style.setProperty("display", "");
+                    //card.querySelector("[data-form='subspecies']").style.setProperty("display", "");
+                    //card.querySelector("[data-select='sex']").style.setProperty("display", "");
+
+                    //if (rowState[id].traptype !== undefined) {
+                    //    trapTypeSelect.value = rowState[id].traptype;
+                    //}
+
+                    //card.querySelector("[data-button='updateLocation']").style.setProperty("display","none");
+
+                    //trapTypeSelect.setAttribute("disabled", "disabled");
+                    //card.querySelector("[data-select='animalType']").removeAttribute("disabled");
+
+                    //card.querySelector("[data-form='notes']").style.setProperty("display", "");
+                    //ard.querySelector("[data-form='catchNotes']").style.setProperty("display", "none");
+
+                    //card.querySelector("[data-value='triggeredTimeFormatted'").innerHTML = "-";
+
+                    break;
+                case 2:
+
+                    var trapSection = card.querySelector("[data-section='right-section']");
+
+                    if (trapSection != null) {
+                        trapSection.style.setProperty("display", "");
+                    }
+
+                    icon.classList.add("redIcon");
+                    hours.style.setProperty("visibility", "");
+                    hours.style.setProperty("border", "2px solid red");
+                    hours.style.setProperty("color", "red");
+
+                    card.querySelector("[data-button='deactivateButton']").style.setProperty("display", "none");
+                    card.querySelector("[data-button='clearButton']").style.setProperty("display", "");
+                    card.querySelector("[data-button='clearButton']").innerHTML = "CLEAR";
+                    card.querySelector("[data-button='clearButton']").style.setProperty("background-color", "darkred");
+
+                    //card.querySelector("[data-button='submitButton']").innerHTML = "CLEAR";
+                    //card.querySelector("[data-button='submitButton']").style.setProperty("background-color", "darkred");
+
+                    // Show form qs
+                    //card.querySelector("[data-form='notes']").style.setProperty("display", "");
+                    //card.querySelector("[data-form='age']").style.setProperty("display", "");
+                    //card.querySelector("[data-form='subspecies']").style.setProperty("display", "");
+                    //card.querySelector("[data-select='sex']").style.setProperty("display", "");
+
+                    //var trapTypeSelect = card.querySelector("[data-select='trapType']");
+                    //if (rowState[id].traptype !== undefined) {
+                    //    trapTypeSelect.value = rowState[id].traptype;
+                    //}
+
+                    //card.querySelector("[data-form='notes']").style.setProperty("display", "");
+                    //card.querySelector("[data-form='catchNotes']").style.setProperty("display", "none");
+
+                    //trapTypeSelect.setAttribute("disabled", "disabled");
+                    //card.querySelector("[data-select='animalType']").removeAttribute("disabled");
+
+                    // Display notes
+                    if (rowState[id].notes && rowState[id] !== "") {
+                        card.querySelector("[data-section='notes']").style.setProperty("display", "flex");
+                        card.querySelector("[data-value='notes']").innerHTML = rowState[id].notes
+                    } else {
+                        card.querySelector("[data-section='notes']").style.setProperty("display", "none");
+                    }
+                    break;
+
+            }
+            rowState[id].state = value;
+        }
+
+
+
+        /**
+         * Shows the stats of a card that has been clicked.
+         * @param event
+         */
+        function toggleClearScreen(event) {
+            var clearScreen = event.querySelector("[data-section='clearScreen']");
+            if (clearScreen.style.display == "none") {
+                if (cardSelected) {
+                    cardSelected.classList.remove("openCardBorder");
+                    cardSelected.querySelector("[data-section='clearScreen']").style.setProperty("display", "none");
+                    formDiv.style.setProperty("display", "none");
+                    cardSelected.querySelector("[data-button='clearButton']").style.setProperty("display", "");
+                }
+
+                var id = event.parentElement.parentElement.parentElement.getAttribute("data-id");
+                var state = rowState[id].state;
+
+                var checkButton = clearScreen.querySelector("[data-button='checkButton']");
+
+                switch (state) {
+                    case 0:
+                        clearScreen.querySelector("[data-button='deactivateButton']").style.setProperty("display", "none");
+                        if (checkButton) {
+                            checkButton.style.setProperty("display", "none");
+                        }
+                        break;
+                    case 1:
+                        clearScreen.querySelector("[data-button='deactivateButton']").style.setProperty("display", "");
+                        if (checkButton) {
+                            checkButton.style.setProperty("display", "");
+                        }
+                        break;
+                    case 2:
+                        clearScreen.querySelector("[data-button='deactivateButton']").style.setProperty("display", "none");
+                        if (checkButton) {
+                            checkButton.style.setProperty("display", "none");
+                        }
+                        break;
+                }
+
+                clearScreen.style.setProperty("display", "");
+
+                // var container = document.getElementById("container");
+                // if (clearScreen.parentElement.offsetTop + clearScreen.parentElement.offsetHeight - container.scrollTop > container.offsetHeight) {
+                //     container.scrollTop += clearScreen.parentElement.offsetHeight - (container.offsetHeight - clearScreen.parentElement.offsetTop);
+                // }
+                cardSelected = clearScreen.parentNode.parentNode;
+
+
+                // Scroll Container
+
+                var container = document.getElementById("container");
+
+
+                // Offset is the amount of the card that is hidden.
+                /*
+                if (formDiv.offsetHeight + 50 + cardSelected.offsetTop < container.offsetHeight) {
+
+                    var offset = (cardSelected.offsetTop + cardSelected.offsetHeight + 50 - container.scrollTop) - container.offsetHeight;
+                    // Set the container scroll top so the bottom of the card is at the bottom of the container.
+                    container.scrollTop += offset;
+                    if (1 > container.offsetHeight) {
+                        container.scrollTop = cardSelected.offsetHeight + cardSelected.offsetTop;
+                    }
+                }
+                */
+
+                // Add open border style
+                /*if (!cardSelected.classList.contains("newPhotoBorder")) {
+                    cardSelected.classList.add("openCardBorder");
+                }*/
+                var packet = {
+                    id: id,
+                    state: state,
+                    lat: rowState[id].lat,
+                    lon: rowState[id].lon
+                }
+                fw.fireEvent("card selected", packet);
+            } else {
+                clearScreen.style.setProperty("display", "none");
+                if (cardSelected) {
+                    formDiv.style.setProperty("display", "none");
+                    cardSelected.classList.remove("openCardBorder");
+                }
+                fw.fireEvent("card closed", event.parentElement.parentElement.parentElement.getAttribute("data-id"));
+            }
+        }
+
+        /**
+         * Adds a new record or updates and existing record with the given sensor collection.
+         *
+         * The columns available are: trapper, trapType, temp, setTime, updateTime, triggeredTime.
+         *
+         * Anything with data-value will automaticcally have the value updated in .innerHTML. From items etc neet to use the second switch statement.
+         *
+         * @param packet
+         */
+        var waitingForFilter = true;
+        var newInfo = false;
+        function receiveValue(packet) {
+            var collection = packet.value;
+            var col = SensaCollection.load(collection);
+            var rowKeys = Object.keys(collection.data);
+
+            for (var i = 0; i < rowKeys.length; i++) {
+                var cardId = rowKeys[i];
+                var card = rowElems[cardId];
+                
+                if (card == undefined) {
+                    // Create new card
+                    var cardType = col.get(cardId).cardType;
+
+                    rowState[cardId] = Object.seal({
+                        id: null,
+                        jobid: null,
+                        battery: null,
+                        temp: null,
+                        signal: null,
+                        sensorbattery: null,
+                        traptype: null,
+                        trapper: null,
+                        settime: null,
+                        updatetime: null,
+                        checktime: null,
+                        triggeredtime: null,
+                        notes: null,
+                        viewed: null,
+                        alert: null,
+                        state: 0,
+                        catchnotes: null,
+                        age: null,
+                        subspecies: null,
+                        sex: null,
+                        animaltype: null,
+                        lat: null,
+                        lon: null,
+                        file: null,
+                        cardType: cardType,
+                        model: null,
+                        lure: null,
+                        suburb: "--",
+                        address: "--"
+                    });
+
+                    if (cardType == null) {
+                        Log.verbose("Card type not found in SensaCollection.");
+                        continue;
+                    }
+                    
+                    switch (cardType.toUpperCase()) {
+                        case "CAMERA":
+                            card = cameraTrapCardTemplate.cloneNode(true);
+                            card.querySelector("[data-info='icon']").classList.add("camera");
+                            card.querySelector("[data-section='triggerDetails']").style.setProperty("display", "none");
+                            card.querySelector("[data-section='photo']").style.setProperty("display", "");
+                            break;
+                        case "CAMERATRAP":
+                            card = cameraTrapCardTemplate.cloneNode(true);
+                            card.querySelector("[data-section='photo']").style.setProperty("display", "");
+                            //card.querySelector("[data-info='icon']").classList.add("camera");
+                            break;
+                        case "TRAP":
+                            card = cameraTrapCardTemplate.cloneNode(true);
+                            card.querySelector("[data-section='photo']").style.setProperty("display", "none");
+                            card.querySelector("[data-section='deviceStatus']").style.setProperty("display", "none");  
+                            break;
+                        case "VTRAP":
+                            card = virtualCardTemplate.cloneNode(true);
+                            card.querySelector("[data-info='icon']").classList.add("virtual");
+                            card.querySelector("[data-section='deviceStatus']").style.setProperty("display", "none");  
+                            break;
+                        case "ATS":
+                            card = atsCardTemplate.cloneNode(true);
+                            break;
+                            //card = document.createElement("ats-card");
+                            default:
+                            // Invalid card option.
+                            Log.verbose("Invalid card Type found.");
+                            continue;
+                    }
+                                            
+                    Log.verbose(`Creating card type: ${cardType} for ${cardId}.`);
+                    card.removeAttribute("id");
+
+                    
+                    rowElems[cardId] = card;
+
+                    // Add to table.
+                    addCard(cardId, card);
+
+
+                    // Set default card state to 0 (inactive) if the state is not received.
+                    if (collection.headers.indexOf("state") === -1) {
+                        setState(cardId, 0);
+                    }
+
+                }
+
+                // Update stats
+                for (var j = 0; j < collection.headers.length; j++) {
+                    var headerValue = collection.headers[j];
+                    var elem = card.querySelector("[data-value='" + headerValue + "']");
+
+                    /**
+                     * This is for traps that have the lat and lon shown in the formDiv
+                     */
+                    if (cardType === "VTRAP" && (headerValue === "lat" || headerValue === "lon")) {
+                        elem = formDiv.querySelector("[data-value='" + headerValue + "']");
+                    }
+
+
+                    // It may not exist.
+                    if (elem !== null) {
+                        switch (headerValue.toLowerCase()) {
+                            case "battery":
+                                collection.data[cardId][j] += "%";
+                                break;
+
+                            case "temp":
+                                collection.data[cardId][j] += "&#176;C";
+                                break;
+
+                            case "suburb":
+
+                                if (collection.data[cardId][j] == "" || collection.data[cardId][j].indexOf("[object Object]") != -1) {
+                                    collection.data[cardId][j] = "--"
+                                }
+                                break;
+
+                            case "address":
+                                
+                                // debugger;
+                                // const re =  /[a-zA-Z0-9]{4}\+[a-zA-Z0-9]{2}/g;
+                                if (collection.data[cardId][j] == "" || collection.data[cardId][j].indexOf("[object Object]") != -1) {
+                                    collection.data[cardId][j] = "--";
+                                } else if (collection.data[cardId][j].search(/[a-zA-Z0-9]{4}\+[a-zA-Z0-9]{2}/g) != -1) {
+                                    collection.data[cardId][j] = collection.data[cardId][j].replace(/[a-zA-Z0-9]{4}\+[a-zA-Z0-9]{2}/g, "Unknown,");
+                                }
+                                break;
+
+                            case "signal":
+                                collection.data[cardId][j] += "%";
+                                break;
+
+                            case "sensorbattery":
+                                collection.data[cardId][j] += "%";
+                                break;
+
+                            case "traptype":
+                                if (collection.data[cardId][j] != "" && trapTypesObj[collection.data[cardId][j]] === undefined) {
+                                    // Add
+                                    setTrapTypes([collection.data[cardId][j]]);
+                                }
+                                //card.querySelector("[data-select='trapType']").value = collection.data[rowKeys[i]][j];
+
+                                break
+                            case "trapper":
+                                if (collection.data[cardId][j] != "" && trapperObj[collection.data[cardId][j]] === undefined) {
+                                    // Add
+                                    setTrappers([collection.data[cardId][j]]);
+                                }
+                                //card.querySelector("[data-select='trapper']").value = collection.data[rowKeys[i]][j];
+
+                                break;
+                            case "settime":
+                                // Check if collection contains state = 0;
+                                var stateIndex = collection.headers.indexOf("state");
+                                
+                                if (collection.data[cardId][stateIndex] == 0) {
+                                    card.querySelector("[data-value='setTimeFormatted']").innerHTML = "-";
+                                } else if (stateIndex === -1 && rowState[rowKeys[i]].state !== undefined && rowState[cardId].state == 0) {
+                                    card.querySelector("[data-value='setTimeFormatted']").innerHTML = "-";
+                                } else {
+
+                                    var date = new Date(parseInt(collection.data[cardId][j])).toLocaleString('en-GB');
+                                    var d = date.split(", ");
+                                    var d0 = d[0].split("/");
+                                    d0[2] = Math.abs(d0[2] - 2000);
+                                    d0 = d0.join("/");
+
+                                    card.querySelector("[data-value='setTimeFormatted']").innerHTML = d[1] + "<br />" + d0;
+                                }
+                                break;
+                            case "updatetime":
+                                var date = new Date(parseInt(collection.data[rowKeys[i]][j])).toLocaleString('en-GB');
+
+                                if (date === 'Invalid Date') break;
+
+                                var d = date.split(", ");
+                                var d0 = d[0].split("/");
+                                d0[2] = Math.abs(d0[2] - 2000);
+                                d0 = d0.join("/");
+
+                                card.querySelector("[data-value='updateTimeFormatted']").innerHTML = d[1] + "<br />" + d0;
+                                break;
+                            case "checktime":
+                                var date = new Date(parseInt(collection.data[rowKeys[i]][j])).toLocaleString('en-GB');
+
+                                if (date === 'Invalid Date') break;
+
+                                var d = date.split(", ");
+                                var d0 = d[0].split("/");
+                                d0[2] = Math.abs(d0[2] - 2000);
+                                d0 = d0.join("/");
+
+                                card.querySelector("[data-value='checkTimeFormatted']").innerHTML = d[1] + "<br />" + d0;
+                                break;
+                            case "notes":
+                                /*
+                                if (collection.data[rowKeys[i]][j] !== "") {
+                                    card.querySelector("[data-section='notes']").style.setProperty("display", "flex");
+                                } else {
+                                    card.querySelector("[data-section='notes']").style.setProperty("display", "none");
+                                }
+                                */
+
+                                //card.querySelector("[data-form='notes']").value = collection.data[rowKeys[i]][j];
+                                break;
+                            case "alert":
+                                if (collection.data[cardId][j] !== "") {
+                                    card.querySelector("[data-section='alert']").style.setProperty("display", "flex");
+                                } else {
+                                    card.querySelector("[data-section='alert']").style.setProperty("display", "none");
+                                }
+                                break;
+
+                            case "viewed":
+                                if (!isNaN(collection.data[cardId][j]) && parseInt(collection.data[cardId][j]) === 0) {
+                                    card.querySelector("[data-section='photo']").style.setProperty("color", "blue");
+                                    card.querySelector("[data-section='photo']").style.setProperty("display", "block");
+                                    card.querySelector("[data-section='newPhotoIcon']").style.setProperty("visibility", "visible");
+                                    card.children[0].classList = [];
+
+                                } else {
+                                    card.querySelector("[data-section='photo']").style.setProperty("color", "");
+                                    card.querySelector("[data-section='newPhotoIcon']").style.setProperty("visibility", "hidden");
+
+                                }
+
+                                break;
+
+                            case "triggeredtime":
+                                var stateIndex = collection.headers.indexOf("state");
+                                if (collection.data[cardId][stateIndex] == 0 || collection.data[cardId][stateIndex] == 1) {
+                                    card.querySelector("[data-value='triggeredTimeFormatted']").innerHTML = "-";
+                                } else if (stateIndex === -1 && rowState[cardId].state !== undefined && (rowState[cardId].state == 0 || rowState[cardId].state == 1)) {
+                                    card.querySelector("[data-value='triggeredTimeFormatted']").innerHTML = "-";
+                                } else {
+                                    var date = new Date(parseInt(collection.data[cardId][j])).toLocaleString('en-GB');
+
+                                    if (date === 'Invalid Date') break;
+
+                                    var d = date.split(", ");
+                                    var d0 = d[0].split("/");
+                                    d0[2] = Math.abs(d0[2] - 2000);
+                                    d0 = d0.join("/");
+
+                                    card.querySelector("[data-value='triggeredTimeFormatted']").innerHTML = d[1] + "<br />" + d0;
+                                }
+                                break;
+
+                            // This is to update the inner text of the lat field in the formDiv
+                            case "lat":
+                                elem.innerText = parseFloat(collection.data[cardId][j]).toFixed(6);
+                                break;
+
+
+                            // This is to update the inner text of the lon field in the formDiv
+                            case "lon":
+                                elem.innerText = parseFloat(collection.data[cardId][j]).toFixed(6);
+                                break;
+                        }
+
+                        elem.innerHTML = collection.data[cardId][j];
+                    } else {
+                        // Put item in here if it does not directly go into .innerHTML
+                        switch (headerValue) {
+                            case "state":
+                                // Set correct color
+                                var stateValue = parseInt(collection.data[cardId][j]);
+
+                                if (isNaN(stateValue)) {
+                                    // Not a valid number
+                                    collection.data[cardId][j] = 0;
+                                    stateValue = 0;
+                                    break;
+                                }
+
+                                if (!(0 <= stateValue && stateValue < 3)) {
+                                    // Number out of range
+                                    break;
+                                }
+                                rowState[cardId][headerValue] = stateValue;
+
+                                //setState(rowKeys[i], stateValue);
+                                //card.style.setProperty("display", "");
+                                break;
+                            case "catchnotes":
+                                //card.querySelector("[data-form='catchNotes']").value = collection.data[rowKeys[i]][j];
+                                break;
+                            case "viewed":
+                                if (!isNaN(collection.data[rowKeys[i]][j]) && parseInt(collection.data[cardId][j]) === 0) {
+                                    newPhotoEvent({
+                                        value: cardId
+                                    });
+
+                                    card.querySelector('[data-section=\'photo\']').style.setProperty('color', 'blue');
+                                    card.querySelector('[data-section=\'photo\']').style.setProperty('display', 'block');
+                                } else {
+                                    card.querySelector('[data-section=\'photo\']').style.setProperty('color', 'black');
+                                    card.querySelector('[data-section=\'photo\']').style.setProperty('display', 'block');
+                                    card.querySelector("[data-section='newPhotoIcon']").style.setProperty("visibility", "hidden");
+
+                                    // Hide camera section if cardtype virtual
+                                    if (rowState[cardId].cardType.toUpperCase() === "VTRAP") {
+                                        card.querySelector("[data-section='photo']").style.setProperty("display", "none");
+                                    }
+                                }
+
+                                break;
+                        }
+                    }
+                    if (rowState[cardId][headerValue] !== undefined)
+                        rowState[cardId][headerValue] = collection.data[cardId][j];
+
+                }
+
+                
+                // If this is null then the received data is from the state database.
+                // We only want to show the card if the information has come from the channels
+                // as the device may have been removed from the system.
+                if (rowState[cardId]["state"] == null && rowState[cardId]["cardType"] == "VTRAP") {
+                    card.style.setProperty("display", "none");
+                } else {
+                    setState(cardId, parseInt(rowState[cardId]["state"]));
+                    card.style.setProperty("display", "");
+                }
+
+            }
+
+            newInfo = true;
+            updateHours();
+        }
+
+
+        /**
+         * Sorts the cards by the given column value.
+         *
+         * @param payload
+         */
+        function sortEvent(payload) {
+
+            if (!Array.isArray(payload.value) && typeof payload.value !== "string") {
+                throw new TypeError("Traps Card sort event expected an Array or string but found '" + typeof payload.value + "'.");
+            }
+
+            if (typeof payload.value === "string") {
+                payload.value = [payload.value.toLowerCase()];
+            }
+
+
+            var validSorts = ["trapper", "traptype", "settime", "updatetime", "triggeredtime", "animaltype", "state", "cardtype"];
+            if (validSorts.indexOf(payload.value[0].toLowerCase()) === -1) {
+                throw new TypeError(payload.value + " is an invalid sort. Please use " + validSorts.join());
+            }
+
+            if (payload.value.length > 1) {
+                var order = sortCards(rowState, payload.value[0], payload.value[1]);
+            } else {
+                var order = sortCards(rowState, payload.value[0], true);
+            }
+
+            reorderCards(order);
+        }
+
+
+        /**
+         * Reorders the cards in the table.
+         * @param order
+         */
+        function reorderCards(order) {
+            for (var i = 0; i < order.length; i++) {
+                var row = rowElems[order[i]];
+
+                if (typeof row === "undefined") {
+                    continue;
+                }
+
+                tableBody.appendChild(row.parentElement);
+            }
+
+            if (cardSelected) {
+                var container = document.getElementById("container");
+                container.scrollTop = cardSelected.offsetTop - 80;
+            }
+        }
+
+        /**
+         * The sort function used for sorting the cards. This is a custom function per card application.
+         * @param data Data object containing the state of all the cards.
+         * @param sortType Field inside the object to sort by.
+         */
+        function sortCards(data, sortType, asc) {
+
+            var dataKeys = Object.keys(data);
+
+            if (asc === false) {
+                return dataKeys.sort(function (firstKey, secondKey) {
+                    var first = data[firstKey];
+                    var second = data[secondKey];
+                    var firstVal = first[sortType];
+                    var secondVal = second[sortType];
+
+                    if (firstVal === null) return 1;
+                    if (secondVal === null) return -1;
+
+                    if (typeof firstVal == "string") {
+                        firstVal = firstVal.toLowerCase();
+
+                    }
+
+                    if (typeof secondVal == "string") {
+                        secondVal = secondVal.toLowerCase();
+                    }
+
+
+                    if (firstVal < secondVal) {
+                        return -1;
+                    } else if (firstVal == secondVal) {
+                        return 0;
+                    } else {
+                        return 1;
+                    }
+
+                });
+            } else {
+                return dataKeys.sort(function (firstKey, secondKey) {
+                    var first = data[firstKey];
+                    var second = data[secondKey];
+                    var firstVal = first[sortType]
+                    var secondVal = second[sortType]
+
+                    if (typeof first == "string") {
+                        firstVal = firstVal.toLowerCase();
+                        secondVal = secondVal.toLowerCase();
+                    }
+
+                    if (firstVal === null) return 1;
+                    if (secondVal === null) return -1;
+
+                    if (firstVal > secondVal) {
+                        return -1;
+                    } else if (firstVal == secondVal) {
+                        return 0;
+                    } else {
+                        return 1;
+                    }
+
+                });
+            }
+        }
+
+
+        function addCard(id, card) {
+            var row = document.createElement("tr");
+            row.appendChild(card);
+            row.setAttribute("data-id", id);
+            row.style.setProperty("display", "none");
+            tableBody.appendChild(row);
+        }
+
+
+
+        function deleteCard(id) {
+            if (rowElems[id]) {
+                var card = document.querySelector("[data-id='" + id + "']");
+                card.parentNode.removeChild(card);
+                delete rowElems[id];
+            }
+        }
+
+
+        function updateValue(id, stat, value) {
+            var row = document.querySelector("[data-id='" + id + "']");
+            var statElem = row.querySelector("[data-value='" + stat + "']").innerHTML = value;
+        }
+
+        // API actions for dashboard mode
+        function fw_dashStart(mode) {
+
+            if (mode !== "DASHBOARD") {
+                document.getElementsByTagName("html")[0].style.setProperty("background-color", "grey");
+            } else {
+                setInterval(updateHours, hoursTime);
+                setInterval(filterNewInfo, filterInterval);
+            }
+
+            return "OK";
+        }
+
+
+        // API startup actions for toolbox. Return "OK" if startup OK else return an error string
+        function fw_toolStart(mode) {
+            return "OK";
+        }
+
+        // API startup actions when first created by dropping in design mode. Return "OK" if startup OK else return an error string
+        function fw_newWidget(mode) {
+            return fw_dashStart();
+        }
+
+        // API called when switching to design mode (optional, delete if not using)
+        function fw_startDesign() {
+            return true;
+        }
+
+        // API called to manage scaling
+        function fw_scale(scaleX, scaleY) {
+            return true;
+        }
+
+        // API called when widget edit starts (return false to stop editor, "NOSCALE", "NOVERT", "NOHORIZ", "NOVERT,NOHORIZ" to customise scaling)
+        function fw_startEdit() {
+            return true;
+        }
+
+        // API called when widget edit finishes (apply edit changes here)
+        function fw_endEdit(mode) {
+        }
+
+        function fw_db(channel, scope, data) {
+        }
+
+        // API called for incoming channel events
+        function fw_feed(channel, client, data) {
+            receiveValue(data);
+        }
+
+        // Initialize widget framework API - DO NOT ADJUST OR DELETE
+        fw.ready();
+
+
+        /* ATS Card Web Component */        
+        class AtsCard extends HTMLElement {
+            constructor() {
+            super();
+                this.attachShadow({ mode: 'open' });
+                this.shadowRoot.appendChild(atsCardTemplate.content.cloneNode(true));
+            }
+        }
+
+        //customElements.define('ats-card', AtsCard);
+
+
+    </script>
+</body>
+</html>

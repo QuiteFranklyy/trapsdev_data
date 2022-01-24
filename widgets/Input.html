@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Input (Sensahub Dashboard Widget)</title>
+    <meta charset='utf-8' />
+    <link rel="preload" href="../fonts/OpenSans400.woff2" as="font" crossorigin="anonymous">
+    <style>
+        
+        @font-face {
+            font-family: "Open Sans";
+            font-style: normal;
+            font-weight: 400;
+            src: local("Open Sans"), local("OpenSans"), url(../fonts/OpenSans400.woff2) format("woff2"), url(../fonts/OpenSans400.woff) format("woff");
+            font-display: block;
+        }
+
+        /* Hide the browser's default checkbox */
+        .container input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+
+        /* Create a custom checkbox */
+        .checkmark {
+            position: absolute;
+            top: 8px;
+            height: 15px;
+            width: 15px;
+            background-color: #f2f2f2;
+            border-radius: 2px;
+            border: 2px solid #e57123;
+            visibility: hidden;
+            cursor: pointer;
+        }
+
+        /* On mouse-over, add a grey background color */
+        .container:hover input[type="checkbox"] ~ .checkmark {
+            background-color: rgba(247, 152, 89, 0.7);
+        }
+
+        /* When the checkbox is checked, add a blue background */
+        .container input[type="checkbox"]:checked ~ .checkmark {
+            background-color: rgba(245, 129, 51);
+        }
+
+        /* Create the checkmark/indicator (hidden when not checked) */
+        .checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
+        }
+
+        /* Show the checkmark when checked */
+        .container input[type="checkbox"]:checked ~ .checkmark:after {
+            display: block;
+        }
+
+        /* Style the checkmark/indicator */
+        .container .checkmark:after {
+            left: 4px;
+            /* top: 1px; */
+            width: 5px;
+            height: 10px;
+            border: solid white;
+            border-width: 0 3px 3px 0;
+            -webkit-transform: rotate(45deg);
+            -ms-transform: rotate(45deg);
+            transform: rotate(45deg);
+        }
+
+        body {
+            font-family: 'Open Sans';
+            overflow: hidden;
+            font-size: 16px;
+        }
+
+        /* Remove webkit styling */
+        *:focus {
+            outline: none;
+        }
+
+        .noSelect {
+            user-select: none;
+        }
+
+        ::placeholder {
+            opacity: 1; /* Firefox */
+            color: #cccccc;
+        }
+
+        input:-ms-input-placeholder {
+            color: #cccccc !important;
+        }
+
+        .red {
+            border: 2px solid #eed3d7;
+            background-color: #f2dede;
+            color: #b94a48;
+            padding-right: 0px;
+        }
+
+        .redInp:focus {
+            box-shadow: 0 0 0 0.2rem rgba(185, 74, 72, 0.1);
+            border: 2px solid #dec3c7;
+            padding-right: 1px;
+        }
+
+        .yellow {
+            border: 2px solid #fbeed5;
+            background-color: #fcf8e3;
+            color: #c09853;
+            padding-right: 0px;
+        }
+
+        .yellowInp:focus {
+            box-shadow: 0 0 0 0.2rem rgba(251, 238, 213, 0.6);
+            border: 2px solid #fbeed5;
+            padding-right: 1px;
+        }
+
+        .grey {
+            border: 2px solid #e3e3e3;
+            background-color: #f5f5f5;
+            color: #777;
+            padding-right: 0px;
+        }
+
+        .greyInp:focus {
+            box-shadow: 0 0 0 0.2rem rgba(227, 227, 227, 0.5);
+            border: 2px solid #e3e3e3;
+            padding-right: 1px;
+        }
+
+        .blue {
+            border: 2px solid #acd8e1;
+            background-color: #bce8e1;
+            color: #3a87ad;
+            padding-right: 0px;
+        }
+
+        .blueInp:focus {
+            box-shadow: 0 0 0 0.2rem rgba(172, 216, 225, 0.6);
+            border: 2px solid #acd8e1;
+            padding-right: 1px;
+        }
+
+        .blue_strong {
+            border: 2px solid #4056A9;
+            background-color: #a5c6f0;
+            color: #15317E;
+            padding-right: 0px;
+        }
+
+        .blue_strongInp:focus {
+            box-shadow: 0 0 0 0.2rem rgba(78, 139, 230, 0.6);
+            border: 2px solid #4e8be6;
+            padding-right: 1px;
+        }
+
+
+        .green {
+            border: 2px solid #b6c9a6;
+            background-color: #dff0d8;
+            color: #468847;
+            padding-right: 0px;
+        }
+
+        .greenInp:focus {
+            box-shadow: 0 0 0 0.2rem rgba(223, 240, 216, 0.6);
+            border: 2px solid #a6b996;
+            color: #1e601f;
+            padding-right: 1px;
+        }
+
+        .orange {
+            border: 2px solid #f5c8b9;
+            background-color: #ffe8d9;
+            color: #d16e2c;
+            padding-right: 0px;
+        }
+
+        .orangeInp:focus {
+            box-shadow: 0 0 0 0.2rem rgba(252, 101, 0, 0.1);
+            border: 2px solid #f5d8c9;
+            color: #d16e2c;
+            padding-right: 1px;
+        }
+
+        .orange_strong {
+            border: 2px solid #d56113;
+            background-color: #c55103;
+            color: #d56113;
+            padding-right: 0px;
+        }
+
+        .orange_strongInp:focus {
+            box-shadow: 0 0 0 0.2rem rgba(252, 101, 0, 0.4);
+            border: 2px solid #c55103;
+            color: #d56113;
+            padding-right: 1px;
+        }
+
+        .black {
+            border: 2px solid #555555;
+            background-color: #343a40;
+            color: #000;
+            padding-right: 0px;
+        }
+
+        .blackInp:focus {
+            box-shadow: 0 0 0 0.2rem rgba(180, 180, 180, 0.5);
+            border: 2px solid #777777;
+            color: #000;
+            padding-right: 1px;
+        }
+
+        .white {
+            border: 2px solid #ebebeb;
+            background-color: #000;
+            color: #000;
+            padding-right: 0px;
+        }
+
+        .whiteLabel {
+            color: #ffffff;
+            white-space: nowrap;
+            border: none;
+        }
+
+        .whiteInp:focus {
+            box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.7);
+            border: 2px solid #ebebeb;
+            color: #000;
+            padding-right: 1px;
+        }
+
+        .label {
+            background-color: transparent;
+            border: none;
+            white-space: nowrap;
+        }
+
+        input {
+            outline: none;
+            font-size: 16px;
+            padding: 3px 3px 3px 3px;
+            margin: 5px 3px 3px 3px;
+            border-radius: 5px 5px 5px 5px;
+            float: left;
+            height: 22px !important;
+            font-family: 'Open Sans';
+            background-color: white;
+            width: 100%;
+        }
+
+
+        input:focus {
+            transition: border-color ease-in-out 0.25s, box-shadow ease-in-out 0.25s;
+            padding: 3px 0px 3px 3px;
+            margin: 5px 1px 3px 3px;
+            outline: none;
+        }
+
+        .cursorMove {
+            cursor: move;
+        }
+
+        .required > #label::after {
+            content: " *";
+            color: red;
+        }
+
+        .checkboxText {
+            padding-top: 12px;
+            float: right;
+        }
+
+        .checkbox {
+            visibility: hidden;
+        }
+
+        input[type=checkbox] ~ .checkmark {
+            visibility: visible;
+        }
+
+        input[type=checkbox] ~ .checkbox {
+            visibility: visible;
+        }
+
+        .required input[type=checkbox] ~ #checkboxText::after {
+            content: " *";
+            color: red;
+        }
+
+        input[type=checkbox] ~ #label {
+            visibility: hidden;
+        }
+
+        .iti {
+            width: 100%;
+        }
+
+        .intl-tel-input {
+            width: 100%;
+        }
+
+        /* Remove google logo from country predictions*/
+        /* .pac-logo:after {
+            height: 0 !important;
+            background: white;
+        } */
+
+        /* Prevent clipping on invalid api display */
+        .gm-err-autocomplete {
+            padding-left: 3px !important;
+            background-image: none !important;
+        }
+
+    </style>
+</head>
+<body id="body">
+    <div id="group">
+        <div id="widget" style="position: absolute; left: 0; top: 0; width: 100px; height: 53px; z-index: 100; line-height:0.8">
+            <form id="form" class="container" onsubmit="event.preventDefault();">
+                &nbsp;
+                <label id="label" style="font-size: 14px;">Label</label>
+                <label>
+                    <input type="text" id="textInput" placeholder="Input" class="green greenInp" autocomplete="off" spellcheck="true" style="background-color: white" onblur="moveAway()">
+                    <span class="checkmark"></span>
+                    <label id="checkboxText" class="checkboxText checkbox" style="float:left;"></label>
+                </label>
+            </form>
+        </div>
+    </div>
+    <script>
+        "use strict";
+        //#region --- Widget Settings ---
+        var options = {
+            settings: {
+                "category": "widget",
+                "type": window.location.pathname.split("/").slice(-1)[0].split(".")[0].replace("%20", " "),
+                "iniHeight": parseInt(widget.style.height),
+                "iniWidth": parseInt(widget.style.width),
+                "author": "Sensavation",
+                "tbTooltip": "Input widget used for inputing data.",
+                "tooltip": "",
+                "version": "270520",
+                "group": "forms",
+                "zIndex": "ZINDEX_DEFAULT",
+                "scaling": true,
+                "disabled": false,
+                "setForm": receiveValue,
+                "help": { "type": "file", "source": "help/widgets/Input.md" }
+            },
+            clientEvents: {
+                inputEvents: {
+                    "change scope": changeScope,
+                    "receive value": receiveValue,
+                    "set country": setCountry,
+                    "set validity message": setValidityMessage
+                },
+                outputEvents: [
+                    "on change",
+                    "pressed"
+                ]
+            },
+            serverEvents: {
+                inputEvents: {
+                    "feed": {
+                        "function": fw_feed
+                    },
+                    "ini": {
+                        "function": fw_feed
+                    }
+                }
+            },
+            dataTypes: {
+                "feed": ["string", "number"],
+                "ini": ["string", "number"],
+                "retValue": ["array"]
+            },
+            attribs: {
+                "form id": {    
+                    "type": "input",
+                    "tooltip": "ID to associate form item with.",
+                    "default": "",
+                    "group": "Form Settings"
+                },
+                "form key": {
+                    "type": "input",
+                    "tooltip": "Key associated with a form.",
+                    "default": "",
+                    "group": "Form Settings"
+                },
+                "type": {
+                    "type": "dropdown",
+                    "tooltip": "Input type",
+                    "options": "text,color,date,email,file,number,password,time,checkbox,phonenumber,address",
+                    "default": "text",
+                    "group": "Widget Specific"
+                },
+                "api key": {
+                    "type": "input",
+                    "tooltip": "Registered Google Maps API key.",
+                    "default": "",
+                    "group": "Widget Specific"
+                },
+                "default value": {
+                    "type": "input",
+                    "tooltip": "Default value for input",
+                    "default": "",
+                    "group": "Widget Specific"
+                },
+                "tab index": {
+                    "type": "input",
+                    "tooltip": "Keyboard TAB order when moving between form fields.",
+                    "default": "",
+                    "group": "Widget Specific"
+                },
+                "dirty on change": {
+                    "type": "checkbox",
+                    "tooltip": "Whether or not to set the dirty flag true when the input is changed",
+                    "default": "false",
+                    "group": "Widget Specific"
+                },
+                "enable label": {
+                    "type": "checkbox",
+                    "tooltip": "Select to add label to field",
+                    "default": "true",
+                    "group": "label"
+                },
+                "bold": {
+                    "type": "checkbox",
+                    "tooltip": "Select to use a bold highlight for the label",
+                    "default": "false",
+                    "group": "label"
+                },
+                "use widget name": {
+                    "type": "checkbox",
+                    "tooltip": "Use the widget name as the label",
+                    "default": "false",
+                    "group": "label"
+                },
+                "OR": {
+                    "type": "label",
+                    "default": "OR",
+                    "group": "label"
+                },
+                "label text": {
+                    "type": "input",
+                    "tooltip": "Text to use as the label",
+                    "default": "",
+                    "group": "label"
+                },
+                "color": {
+                    "type": "dropdown",
+                    "tooltip": "Select color theme for input",
+                    "options": "grey,green,red,yellow,blue,blue strong,orange,orange strong,white,black",
+                    "default": "black",
+                    "group": "General"
+                },
+                "placeholder": {
+                    "type": "input",
+                    "tooltip": "Placeholder text",
+                    "default": "",
+                    "group": "General"
+                },
+                "checkbox label side": {
+                    "type": "dropdown",
+                    "tooltip": "Display label on left or right of checkbox",
+                    "options": "left,right",
+                    "default": "left",
+                    "group": "Widget Specific"
+                },
+                "disable editing": {
+                    "type": "checkbox",
+                    "tooltip": "Enable editing in the input.",
+                    "default": "false",
+                    "group": "Widget Specific"
+                },
+                "required": {
+                    "type": "checkbox",
+                    "tooltip": "Cancel Script.getForm request if input has not been filled out or checked.",
+                    "default": "false",
+                    "group": "Form Settings"
+                },
+                "disable spellcheck": {
+                    "type": "checkbox",
+                    "tooltip": "Enable editing in the input.",
+                    "default": "false",
+                    "group": "Widget Specific"
+                },
+                "validate pattern": {
+                    "type": "input",
+                    "tooltip": "Validate input using REGEX",
+                    "default": "",
+                    "group": "Form Settings"
+                },
+                "invalid message": {
+                    "type": "input",
+                    "tooltip": "Message to display if the input is invalid.",
+                    "default": "Data input is invalid, please rectify before continuing.",
+                    "group": "Form Settings"
+                },
+                "use full address": {
+                    "type": "checkbox",
+                    "tooltip": "Choose whether or not to receive an object containing all the address information",
+                    "default": "false",
+                    "group": "Widget Specific"
+                }
+            }
+        };
+        //#endregion
+
+        //#region --- Declarations ---
+        var textInput = document.getElementById("textInput");
+        var label = document.getElementById("label");
+        var checkboxText = document.getElementById("checkboxText");
+        var validityCnt = 0;
+        var regPattern;
+        var defaultString;
+        var form = document.getElementById("form");
+        var IsValid = true;
+        var intlTelInstance;
+        var autoComplete;
+        var inputType;
+        //#endregion
+
+        //#region --- Widget specific functions ---
+
+        function widgetEvent(eventName, value) {
+            fw.fireEvent(eventName, value);
+        }
+
+        // for tab index the framework will get focus on the iframe, so we need to move focus to our input element when pressing TAB
+
+        textInput.addEventListener("change", (e) => {
+            if (fw.attribs("type").toUpperCase() === "ADDRESS") {
+                // The address input will be changed by its own place_changed listener
+                return;
+            }
+            inputChanged();
+        });
+
+        function moveAway() {
+            if (inputType === "CHECKBOX") {
+                document.querySelector(".checkmark").style.removeProperty("box-shadow");
+            }
+
+            if (fw.attribs("validate pattern") && fw.attribs("disable editing") === "false") {                                      // Check validation pattern
+                // with regex we search for matches, so if we are valid then fail (for conditions) [just easier to implement]
+                if (!regPattern.test(textInput.value)) {
+                    IsValid = false;
+                    if (validityCnt == 0) {                               // Don't annoy users too much
+                        alert(fw.attribs("invalid message"));
+                        setTimeout(function () { textInput.focus() }, 20);                                                          // Return me back to fix the issue
+                        validityCnt++;
+                    } else {
+                        fw.func("status", fw.attribs("invalid message"));
+                        setTimeout(function () { validityCnt = 0 }, 10000);                                                          // After a delay, nag the user again if not right
+                    }
+                } else {
+                    validityCnt = 0;
+                    IsValid = true;
+                }
+            }
+
+            fw.func("CHECKBYTELENGTH", 10000, false, false, true, fw, textInput);
+        }
+        //#endregion
+
+        //#region --- Event functions ---
+        function receiveValue(eventData) {
+            if (inputType === "CHECKBOX") {
+                eventData.value = eventData.value == 1 || eventData.value == true ? true : false;
+                textInput.checked = eventData.value;
+            } else if (inputType === "PHONENUMBER") {
+                if (!eventData.value.startsWith("+")) {
+                    eventData.value = "+".concat(eventData.value);
+                }
+                intlTelInstance.setNumber(eventData.value);
+                return;
+            }
+            textInput.value = eventData.value;
+            defaultString = eventData.value;
+        }
+
+        /**
+         * Sets the country for the phonenumber or address type.
+         * For phonenumber, it will change the flag and country dial code shown.
+         * For the address, it will limit the predictions to only be from the given contry.
+         */
+        function setCountry(eventData) {
+            if (inputType === "PHONENUMBER" && intlTelInstance != undefined) {
+                intlTelInstance.setCountry(eventData.value.toLowerCase());
+            } else if (inputType === "ADDRESS" && autoComplete != undefined) {
+                let country = eventData.value;
+                const countryOptions = {
+                    componentRestrictions: {country: eventData.value}
+                };
+                autoComplete.setOptions(countryOptions);
+            }
+        }
+
+        /**
+         * Sets a validity message for the input if the user had entered something invalid.
+         */
+        function setValidityMessage(eventData) {
+            textInput.setCustomValidity(eventData.value);
+            textInput.reportValidity();
+        }
+
+        /**
+         * Changes the incoming server scope
+         * @param eventData
+         */
+        function changeScope(eventData) {
+            fw.func("ChangeChannel", "SCOPE", "0", eventData.value);
+            textInput.value = "";
+        }
+
+        // getValue is a request for value
+        function getValue() {
+            return textInput.value;
+        }
+
+        // Framework function that gets the current form value (v2 of getValue retval)
+        function fw_form() {
+            // Reset validity to allow it to be checked again
+            textInput.setCustomValidity('');
+            if (inputType === "CHECKBOX") {
+                if (fw.attribs("required") === "true" && !textInput.validity.valid) {
+                    form.classList.add("required");
+                    setValidityMessage({value: fw.attribs("invalid message")});
+                    return "[~{0}~]";
+                } else {
+                    form.classList.remove("required");
+                }
+                return textInput.checked;
+            } else if (inputType === "PHONENUMBER") {
+                return intlTelInstance.getNumber();
+            } else if (inputType === "FILE") {
+                return textInput.files[0];
+            }
+            
+            if (fw.attribs("required") === "true" && !textInput.validity.valid) {
+                form.classList.add("required");
+                setValidityMessage({value: fw.attribs("invalid message")});
+                return "[~{0}~]";
+            } else {
+                form.classList.remove("required");
+            }
+
+            return textInput.value;
+        }
+
+        function adjustWidthForPhone() {
+            // Set width to fit
+            var width = parseInt(widget.style.width);
+            var flagContainerWidth = document.querySelector(".iti__flag-container").clientWidth;
+            var textboxWidth = textInput.clientWidth;
+            if (width < (flagContainerWidth + textboxWidth)) {
+                width += flagContainerWidth;
+            }
+            // Timeout for width to be properly set after being changed in design.js
+            setTimeout(() => fw.func("ADJUSTSIZE", "WIDTH", width), 0);
+        }
+
+        function initPhoneInput() {
+            if (intlTelInstance == undefined) {
+                intlTelInstance = intlTelInput(textInput, {
+                    utilsScript: "../js/intl/utils.js",
+                    separateDialCode: true,
+                    initialCountry: "au"
+                });
+            }
+
+            textInput.addEventListener("open:countrydropdown", function() {
+                var height = 32;
+                height += document.querySelector(".iti__country-list").clientHeight;
+                height += (fw.attribs("enable label") == "true") ? 53 : 32;
+                fw.func("ADJUSTSIZE", "HEIGHT", height);
+            });
+
+            textInput.addEventListener("close:countrydropdown", function() {
+                var height = (fw.attribs("enable label") == "true") ? 53 : 32;
+                fw.func("ADJUSTSIZE", "HEIGHT", height);
+            });
+
+            textInput.addEventListener("countrychange", function() {
+                let country = intlTelInstance.getSelectedCountryData();
+                if (Object.keys(country).length > 0 && country.dialCode.length > 2) {
+                    fw.func("ADJUSTSIZE", "WIDTH", textInput.clientWidth + document.querySelector(".iti__flag-container").clientWidth);
+                }
+            });
+
+            adjustWidthForPhone();
+        }
+
+        /**
+         * Allows input to only accept values defined by the inputFiler
+         */
+        function setInputFilter(textbox, inputFilter) {
+            ["input", "keydown", "keyup", "mousedown", "mouseup", "select", "contextmenu", "drop"].forEach(function(event) {
+                textbox.addEventListener(event, function() {
+                if (inputFilter(this.value)) {
+                    this.oldValue = this.value;
+                    this.oldSelectionStart = this.selectionStart;
+                    this.oldSelectionEnd = this.selectionEnd;
+                } else if (this.hasOwnProperty("oldValue")) {
+                    this.value = this.oldValue;
+                    this.setSelectionRange(this.oldSelectionStart, this.oldSelectionEnd);
+                } else {
+                    this.value = "";
+                }
+                });
+            });
+        }
+
+        function initAddressInput() {
+            autoComplete = new google.maps.places.Autocomplete(textInput, {
+                fields: ["address_components", "geometry"],
+                types: ["address"],
+            });
+            textInput.focus();
+
+            // Increase widget size to fit predictions when focused on
+            autoComplete.addListener("place_changed", inputChanged);
+            textInput.addEventListener("focus", () => fw.func("ADJUSTSIZE", "HEIGHT", 230));
+            textInput.addEventListener("focusout", () => fw.func("ADJUSTSIZE", "HEIGHT", 53))
+        }
+
+        function gm_authFailure() {
+            alert("Invalid Google API key");
+        }
+
+        //#endregion
+
+        //#region --- Widget API functions ---
+
+        // API startup actions for dashboard, initialises widget. Return "OK" if startup OK else return an error string. Don't delete
+        // Widget specific startup actions for dashboard. Return "OK" if startup OK else return an error string
+        function fw_dashStart(mode) {
+            textInput.disabled = false;
+            form.classList.remove("required");
+            textInput.required = false;
+            inputType = fw.attribs("type").toUpperCase();
+
+            window.addEventListener("focus", (e) => {
+                if (inputType === "CHECKBOX") {
+                    document.querySelector(".checkmark").style.setProperty("box-shadow", "0 0 0 0.2rem #f58133");
+                }
+            });
+
+            // if the input is a checkbox, remove shadow
+            if (inputType === "CHECKBOX") {
+                textInput.style.setProperty("box-shadow", "none");
+                document.getElementsByClassName("checkmark")[0].style.setProperty("visibility", "visible");
+                // Press Enter to toggle checkbox selection
+                window.addEventListener("keyup", (e) => {
+                    if (e.code == "Enter") {
+                        fw_clicked();
+                    }
+                });
+            }
+
+            defaultString = fw.attribs("default value");
+
+            // if label, do label
+            if (fw.attribs("enable label") == "true") {
+                if (inputType === "CHECKBOX") {
+                    // set the font size of the other label to 0 to prevent the checkbox label from displaying lower
+                    label.style.setProperty("font-size","0px");
+                    textInput.style.setProperty("width", "100%");
+                    textInput.style.setProperty("left", "0");
+                    textInput.style.setProperty("position", "absolute");
+                    textInput.style.setProperty("box-shadow", "none");
+                    textInput.style.setProperty("right-padding", "0px");
+                    if (fw.attribs("use widget name") != "true") {
+                        checkboxText.innerHTML = fw.attribs("label text");
+                    } else {
+                        checkboxText.innerHTML = fw.widgetName;
+                    }
+
+                    if (fw.attribs("checkbox label side").toUpperCase() === "LEFT") {
+                        checkboxText.style = "float: left; padding-right: 0px";
+                        document.getElementsByClassName("checkmark")[0].style = "right:15px;";
+                    } else {
+                        document.getElementsByClassName("checkmark")[0].style = "left:15px;";
+                        checkboxText.style = "float: right; padding-left: 0px";
+                    }
+
+                    var defaultValueCheckbox = defaultString;
+
+                    if (defaultValueCheckbox.toUpperCase() === "ON" || defaultValueCheckbox === "true" || defaultValueCheckbox === "1") {
+                        textInput.checked = true;
+                    } else {
+                        textInput.checked = false;
+                    }
+
+                    if (fw.attribs("required") == "true") {
+                        form.classList.add("required");
+                        textInput.required = true;
+                    }
+
+                    label.style.setProperty("visibility", "hidden");
+
+                } else if (inputType === "PHONENUMBER") {
+                    let isLoaded = document.querySelectorAll(".intlScript");
+                    if (isLoaded.length == 0) {
+                        // Do not load script multiple times.
+                        // Script must be loaded in DESIGN as the appearance should be visible
+                        var utilsScript = document.createElement('script');
+                        utilsScript.type = "text/javascript";
+                        utilsScript.src = "../js/widgets/Input/intl/utils.js";
+                        document.body.appendChild(utilsScript);
+
+                        var style = document.createElement("link");
+                        style.href = "../css/widgets/Input/intl/intlTelInput.min.css"; 
+                        style.rel = "stylesheet";
+                        style.async = false;
+                        document.head.appendChild(style);
+
+                        var intlScript = document.createElement('script');
+                        intlScript.type = "text/javascript";
+                        intlScript.className = "intlScript";
+                        intlScript.src = "../js/widgets/Input/intl/intlTelInput.min.js";
+                        intlScript.onload = initPhoneInput;
+                        document.body.appendChild(intlScript);
+                    } else {
+                        adjustWidthForPhone();
+                    }
+                } else if (inputType === "ADDRESS") {
+                    if (fw.state === "DASHBOARD") {
+                        var url = "https://maps.googleapis.com/maps/api/js?key=" + fw.attribs("api key") + "&callback=initAddressInput&libraries=places"
+                        var script = document.createElement('script');
+                        script.type = "text/javascript";
+                        script.src = url;
+                        document.body.appendChild(script);
+                    }
+                }
+
+                label.style.setProperty("visibility", "visible");
+                // if color is white, want the label to be white, but the text in the label to be black
+                if (fw.attribs("color").split(' ').join('_').localeCompare("white") == 0) {
+                    label.className = "whiteLabel";
+                } else {
+                    label.className = fw.attribs("color").split(' ').join('_') + " label";
+                }
+                if (fw.attribs("use widget name") != "true") {
+                    label.innerHTML = fw.attribs("label text");
+                } else {
+                    label.innerHTML = fw.widgetName;
+                }
+                if (fw.attribs("bold") == "true") {
+                    label.style.setProperty("font-weight", "bold");
+                } else {
+                    label.style.setProperty("font-weight", "normal");
+                }
+
+                if (fw.attribs("required") == "true") {
+                    form.classList.add("required");
+                    textInput.required = true;
+                }
+            } else {
+                label.style.setProperty("visibility", "hidden");
+                checkboxText.style.setProperty("visibility", "hidden");
+            }
+
+            textInput.value = fw.attribs("default value");
+
+            regPattern = new RegExp(fw.attribs("validate pattern"));
+
+            if (fw.state !== "DASHBOARD") {
+                if (inputType === "CHECKBOX") {
+                    textInput.style.setProperty("pointer-events", "none");              // Can't select a checkbox with pointer-events in design mode
+                }
+                textInput.disabled = true;
+                textInput.style.cursor = "move !important";
+            }
+
+            if (fw.attribs("disable editing") === "true") {
+                textInput.disabled = true;
+            }
+
+            if (fw.attribs("disable spellcheck") === "true") {
+                textInput.setAttribute("spellcheck", "false")
+            }
+
+            textInput.className = fw.attribs("color").split(' ').join('_') + " " + fw.attribs("color").split(' ').join('_') + "Inp";
+            if (inputType == "PHONENUMBER") {
+                textInput.setAttribute("type", "tel");
+                setInputFilter(textInput, function(value) {
+                    return /^\d*\+?\d*$/.test(value); // Allow digits and '+' only
+                    });
+            } else {
+                textInput.setAttribute("type", inputType);
+            }
+
+            textInput.placeholder = fw.attribs("placeholder");
+
+            if (textInput.type !== "text") {
+                textInput.value = fw.attribs("default value");
+            }
+
+            return "OK";
+        }
+
+        function inputChanged() {
+            moveAway();
+
+            if (fw.disabled) {
+                return;
+            }
+
+
+            var dirty = false;
+            var value = textInput.value;
+            switch (inputType) {
+                case "FILE":
+                    value = textInput.files[0];
+                    break;
+                case "CHECKBOX":
+                    value = textInput.checked;
+                    dirty = textInput.checked !== defaultString;
+                    break;
+                case "ADDRESS":
+                    if (fw.attribs("use full address") === "true") {
+                        value = autoComplete.getPlace();
+                    }
+                    break;
+                case "PHONENUMBER":
+                    // Get full number, including dial code
+                    // User may not provide the dial code when typing their number
+                    value = intlTelInstance.getNumber();
+                    // Still want to proceed to default case to check dirty
+                default:
+                    dirty = textInput.value !== defaultString;
+                    break;
+            }
+            var trigger = fw.attribs("dirty on change");
+            if ((trigger !== "false") && dirty) {
+                fw.func("SETDIRTY");
+            }
+
+            if (!IsValid) {
+                fw.fireEvent("on change", "Invalid Input");
+            }
+            else {
+                fw.fireEvent("on change", value);
+            }
+
+            IsValid = true;
+        }
+
+        // API startup actions for toolbox. Return "OK" if startup OK else return an error string
+        function fw_toolStart(mode) {
+            textInput.style.cursor = "move";
+            textInput.style.pointerEvents = "all";
+
+            textInput.disabled = true;
+            textInput.className = "black blackInp cursorMove";
+
+            DisableClickEvent();
+            //textInput.placeholder = "";
+            return "OK";
+        }
+
+        // API startup actions when first created by dropping in design mode. Return "OK" if startup OK else return an error string
+        function fw_newWidget(mode) {
+
+            return fw_dashStart();
+        }
+
+        // API called when switching to design mode (optional, delete if not using)
+        function fw_startDesign() {
+
+
+            DisableClickEvent();
+            return true;
+        }
+        function DisableClickEvent() {
+            //label.style.setProperty("position", "absolute");
+            label.style.setProperty("height", "100%");
+            label.style.setProperty("width", "100%");
+            label.style.setProperty("z-index", "22");
+            label.style.setProperty("padding-bottom", "60px");
+        }
+        // left Button pressed
+        function fw_clicked(event) {
+            fw.widgetID.focus();                            // Ensure the CSS active works, needs focus
+            fw.func("HIDETOOLTIP");
+            if (inputType == "CHECKBOX") {
+                fw.fireEvent("pressed", textInput.checked);
+            } else {
+                fw.fireEvent("pressed", textInput.value)
+            }
+        }
+
+        // API called to manage scaling
+        function fw_scale(scaleX, scaleY) {
+            var width = (options.settings.iniWidth * scaleX);
+            if (inputType === "PHONENUMBER" && document.getElementsByClassName("iti__flag-container").length > 0) {
+                width += document.querySelector(".iti__flag-container").clientWidth;
+                fw.func("ADJUSTSIZE", "WIDTH", width);
+            }
+            fw.widgetID.style.setProperty("width",  width + "px");
+            fw.widgetID.style.setProperty("height", "32px");
+            if (textInput.type === "checkbox") {
+                textInput.style.setProperty("width", "100%");
+            } else {
+                textInput.style.setProperty("width", (options.settings.iniWidth * scaleX) - 20 + "px");
+            }
+            return true;
+        }
+
+        // API called when widget edit starts (return false to stop editor, "NOSCALE", "NOVERT", "NOHORIZ", "NOVERT,NOHORIZ" to customise scaling)
+        function fw_startEdit() {
+            return "NOVERT";
+        }
+
+        // API called when widget edit finishes (apply edit changes here)
+        function fw_endEdit(mode) {
+            if (fw.attribs("tab index") !== "" && isNaN(fw.attribs("tab index"))) {
+                alert("WARNING - Tab index setting isn't a number and will be ignored in tab ordering.")
+            }
+
+            fw_dashStart();
+            fw.func("CHECKBYTELENGTH", 10000, true, true, false, fw, textInput);
+
+            return true;
+        }
+
+        // API called for incoming channel events
+        function fw_feed(channel, client, data) {
+            textInput.value = data.value;
+        }
+
+        // If end users put in non integer values, default to a specified value instead (helper function, delete if not using), rounded up
+        function getInt(value, defaultVal) {
+            var intVal = Math.round(value);
+            return isNaN(intVal) ? defaultVal : intVal;
+        }
+
+        // Initialize widget framework API - DO NOT ADJUST OR DELETE
+        var fw = new parent.widgetAPI(window.name);  // widget framework object
+        fw.ready();
+        //#endregion
+    </script>
+</body>
+</html>

@@ -1,0 +1,1559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Table Widget</title>
+    <link rel="preload" href="../fonts/OpenSans400.woff2" as="font" crossorigin="anonymous">
+    <style>
+        /* Customize the label (the container) */
+        .container {
+            display: block;
+            position: relative;
+            padding-left: 35px;
+            /* padding: 15px; */
+            cursor: pointer;
+            font-size: 22px;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+            /* Hide the browser's default checkbox */
+            .container input {
+                position: absolute;
+                opacity: 0;
+                cursor: pointer;
+                height: 0;
+                width: 0;
+            }
+
+        /* Create a custom checkbox */
+        .checkmark {
+            position: absolute;
+            top: 3px;
+            left: 0;
+            height: 15px;
+            width: 15px;
+            background-color: #f2f2f2;
+            border-radius: 2px;
+            border: 2px solid #e57123;
+        }
+
+        /* On mouse-over, add a grey background color */
+        .container:hover input ~ .checkmark {
+            background-color: rgba(247, 152, 89, 0.7);
+        }
+
+        /* When the checkbox is checked, add a blue background */
+        .container input:checked ~ .checkmark {
+            background-color: rgba(245, 129, 51);
+        }
+
+        /* Create the checkmark/indicator (hidden when not checked) */
+        .checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
+        }
+
+        /* Show the checkmark when checked */
+        .container input:checked ~ .checkmark:after {
+            display: block;
+        }
+
+        /* Style the checkmark/indicator */
+        .container .checkmark:after {
+            left: 4px;
+            /* top: 1px; */
+            width: 5px;
+            height: 10px;
+            border: solid white;
+            border-width: 0 3px 3px 0;
+            -webkit-transform: rotate(45deg);
+            -ms-transform: rotate(45deg);
+            transform: rotate(45deg);
+        }
+
+        body {
+            font-family: "Open Sans";
+            font-size: 16px;
+            user-select: none;
+            overflow-x: hidden;
+            overflow-y: hidden;
+        }
+
+        @font-face {
+            font-family: "Open Sans";
+            font-style: normal;
+            font-weight: 400;
+            src: local("Open Sans"), local("OpenSans"), url(../fonts/OpenSans400.woff2) format("woff2"), url(../fonts/OpenSans400.woff) format("woff");
+            font-display: block;
+        }
+
+        .noSelect {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        #widget {
+            background-color: white;
+        }
+
+        #container {
+            position: fixed;
+            height: calc(100% - 2px);
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            overflow: auto;
+        }
+
+        thead th {
+            position: sticky;
+            position: -webkit-sticky;
+            top: 35px;
+            z-index: 999;
+            background-color: #f2f2f2;
+        }
+
+        table {
+            border-collapse: collapse;
+            table-layout: fixed;
+            border-spacing: 0;
+            width: 100%;
+            max-height: calc(100% - 30px);
+            border: none;
+            bottom: 38px;
+        }
+
+        th {
+            text-transform: capitalize;
+            text-align: left;
+            padding: 5px 0px 5px 0px;
+            margin: 0px 4px 0px 4px;
+            background-color: white;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .checkbox-row {
+            height: 1.5rem;
+        }
+
+        td {
+            position: sticky;
+            text-align: left;
+            word-break: break-word;
+            padding: 5px 10px 5px 10px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        tr[data-display="false"] {
+            display: none;
+        }
+
+        tr.selected {
+            background-color: #dff0d8;
+            font-weight: bold; /* our pastel green*/
+        }
+
+        .rowHover:hover td {
+            background-color: #fffaf3;
+            /* our pastel yellow*/
+        }
+
+        #searchInp {
+            width: 100px;
+            float: right;
+            height: 25px;
+            text-indent: 4px;
+            font: 14px "Open Sans";
+            display: none;
+            border-radius: 3px;
+            border-color: lightgray;
+            margin: 4px;
+            padding: 0.375rem 0.75rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #495057;
+            background-color: #fff;
+            background-clip: padding-box;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            -webkit-transition: width 0.4s ease-in-out;
+            transition: width 0.4s ease-in-out;
+        }
+
+            /* When the input field gets focus, change its width to 100% */
+            #searchInp:focus {
+                width: 300px;
+            }
+
+        /* Remove blue box around textbox. */
+        input:focus {
+            outline: none;
+        }
+
+        #headerBar {
+            top: 0;
+            z-index: 100;
+            position: sticky;
+            display: none;
+            background-color: #f2f2f2;
+            height: 34px;
+            border-bottom: 1px solid #ddd;
+        }
+
+            #headerBar b {
+                text-transform: capitalize;
+            }
+
+        #tableTitle {
+            float: left;
+            margin: 6px 0 6px 14px;
+            color: rgb(119, 119, 119);
+        }
+
+        .headCol {
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+            color: rgb(119, 119, 119);
+        }
+    </style>
+</head>
+<body id="body">
+    <div id="group">
+        <div id="widget"
+             style="
+          position: absolute;
+          left: 0px;
+          top: 0px;
+          width: 100%;
+          height: 100px;
+          z-index: 100;
+        ">
+            <div id="container">
+                <div id="headerBar">
+                    <b id="tableTitle"></b>
+                    <input id="searchInp"
+                           type="search"
+                           placeholder="Search"
+                           onchange="search(this.value)" />
+                </div>
+                <table id="table" style="width: 100%">
+                    <thead>
+                        <tr id="header">
+                            <td id="default-text">
+                                <b>Table</b>
+                            </td>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody"></tbody>
+                </table>
+                <div id="footer" style="height: 30px; width: 100%"></div>
+            </div>
+        </div>
+    </div>
+    <div id="checkboxTemplate" style="display: none">
+        <div style="
+          position: absolute;
+          top: calc(50% - 0.75rem);
+          left: calc(50% - 0.75rem);
+        ">
+            <label class="container">
+                <input class="checkmark-input" type="checkbox" />
+                <span class="checkmark"></span>
+            </label>
+        </div>
+    </div>
+    <script>
+        "use strict";
+        // #region --- Widget Settings ---
+        var fw = new parent.widgetAPI(window.name);  // widget framework object
+        var options = {
+            settings: {
+                "category": "widget",
+                "type": window.location.pathname.split("/").slice(-1)[0].split(".")[0].replace("%20", " "),
+                "iniHeight": parseInt(widget.style.height),
+                "iniWidth": parseInt(widget.style.width),
+                "author": "Sensavation",
+                "tbTooltip": "Display data by column/row",
+                "tooltip": "",
+                "version": "190104",
+                "group": "forms",
+                "zIndex": "ZINDEX_DEFAULT",
+                "disabled": false,
+                "scaling": true,
+                "setForm": receiveValue,
+                "help": { "type": "file", "source": "help/widgets/Table.md" }
+            },
+            clientEvents: {
+                inputEvents: {
+                    "receive value": receiveValue,
+                    "delete rows": deleteRows,
+                    "delete all rows": deleteAllRows,
+                    "set text color": setTextColor,
+                    "sort row by array": sortArrayEvent,
+                    "sort rows": sortRows,
+                    "sort by function": sortByFunction,
+                    "set title": setTitle,
+                    "highlight row": highlightRow,
+                    "select rows": selectRows
+                },
+                outputEvents: ["none", "pressed", "selected", "unselected", "custom"]
+            },
+            serverEvents: {
+                inputEvents: {
+                    "feed": {
+                        "function": fw_feed
+                    },
+                    "ini": {
+                        "function": fw_feed
+                    },
+                    "db": {
+                        "function": fw_db
+                    }
+                },
+                outputEvents: ["none", "pressed", "custom"]
+            },
+            dataTypes: {
+                "feed": ["sensacollection", "number", "string"],
+                "ini": ["sensacollection"],
+                "db": ["sensacollection"],
+                "retValue": ["array"]
+            },
+            attribs: {
+                "form id": {
+                    "type": "input",
+                    "tooltip": "ID to associate form item with.",
+                    "default": "",
+                    "group": "Form Settings"
+                },
+                "form key": {
+                    "type": "input",
+                    "tooltip": "Key associated with a form.",
+                    "default": "",
+                    "group": "Form Settings"
+                },
+                "columns": {
+                    "type": "input",
+                    "tooltip": "Columns to display. leave blank for all",
+                    "default": "Columns",
+                    "group": "Widget Specific"
+                },
+                "colWidths": {
+                    "type": "data",
+                    "default": "",
+                    "group": "Widget Specific"
+                },
+                "selectable": {
+                    "type": "dropdown",
+                    "tooltip": "Select selection type",
+                    "options": "none, single, multi, multi + single",
+                    "default": "none",
+                    "group": "Widget Specific"
+                },
+                "display header": {
+                    "type": "checkbox",
+                    "default": "false",
+                    "group": "Widget Specific",
+                    "tooltip": "Display the header for the table."
+                },
+                "display column titles": {
+                    "type": "checkbox",
+                    "default": "true",
+                    "group": "Widget Specific",
+                    "tooltip": "Display the column titles for the table."
+                },
+                "enable search": {
+                    "type": "checkbox",
+                    "default": "false",
+                    "group": "Widget Specific",
+                    "tooltip": "Allows the user to the table."
+                },
+                /*
+                "enable sorting": {
+                    "type": "checkbox",
+                    "default": "true",
+                    "group": "Widget Specific",
+                    "tooltip": "Allow the rows to be sorted."
+                },
+                */
+                "title": {
+                    "type": "input",
+                    "default": "Table",
+                    "group": "General",
+                    "tooltip": "Name of table."
+                },
+                "text color": {
+                    "type": "color",
+                    "default": "black",
+                    "group": "General",
+                    "tooltip": "Default text color."
+                },
+                "color rows": {
+                    "type": "checkbox",
+                    "default": "false",
+                    "group": "Widget Specific",
+                    "tooltip": "Colour rows on the table."
+                },
+                "row color": {
+                    "type": "color",
+                    "default": "white",
+                    "group": "Widget Specific",
+                    "tooltip": "Row color if enabled."
+                },
+                "font size": {
+                    "type": "input",
+                    "default": "14",
+                    "group": "General",
+                    "tooltip": "Adjust size of text"
+                },
+                "auto scroll": {
+                    "type": "checkbox",
+                    "default": "true",
+                    "group": "Widget Specific",
+                    "tooltip": "Scroll to show row when a new row is added."
+                },
+                "color on hover": {
+                    "type": "checkbox",
+                    "default": "true",
+                    "group": "Widget Specific",
+                    "tooltip": "Colour rows on hover."
+                }
+            }
+        };
+        //#endregion
+
+        // Look at having a circular array incase the buffer gets too big. Will be an issue if page is left open for weeks.
+        var table = document.getElementById("table");
+        var header = document.getElementById("header");
+        var body = document.getElementById("tbody");
+        var searchInp = document.getElementById("searchInp");
+        var headerBar = document.getElementById("headerBar");
+        var tableTitle = document.getElementById("tableTitle");
+        var allData;
+
+        // Setup global checkbox.
+        var globalCheck = document.createElement("input");
+
+        // Sort Array Icons.
+        var upArrow = "m7,11l5,-5l5,5l-10,0z";
+        var upDownArrow = "M12,6L7,11H17L12,6M7,13L12,18L17,13H7Z";
+        var downArrow = "m7,12l5,5l5,-5l-10,0z";
+
+        var rows = {};
+        var headerValues = [];
+        var tablePk;
+        var headerUpper = [];
+        var colWidths = [];
+
+        var defaultColor = "black";
+        var textColor = "black";
+
+        var mouseStartX, colStartWidth, colObj, initHeaderWidth, initColWidths;
+        var winScale = 1;
+        var x_scale = 1;
+        var y_scale = 1;
+
+
+        /**
+         * Client event that sorts the table in the given packet's array order.
+         *
+         * @param {object} eventData - Client to process.
+         */
+        function sortArrayEvent(eventData) {
+            // Check input
+            if (typeof eventData !== "object") {
+                throw new Error("eventData must be an object, not of type " + typeof eventData);
+            }
+
+            if (typeof eventData.value === "undefined") {
+                throw new Error("eventData packet must contain eventData.value");
+            }
+
+            sortByArray(eventData.value);
+        }
+
+
+        function selectRows(eventData) {
+
+            if (fw.attribs("selectable") !== "multi") {
+                throw new Error("Table must have selectable set to 'multi'. Found '" + fw.attribs("selectable") + "'.");
+            }
+
+            if (!Array.isArray(eventData.value)) {
+                throw new TypeError("Input must be an array. Found '" + typeof eventData.value + "'.");
+            }
+
+            for (var i = 0; i < eventData.value.length; i++) {
+                var row = rows[eventData.value[i]];
+                if (row == undefined) {
+                    Log.warn("Row '" + eventData.value[i] + "' could not be found and was not selected.", "ADMIN");
+                    continue;
+                }
+
+                var box = row.querySelector("input");
+                box.checked = !box.checked;
+            }
+        }
+
+
+        /**
+         * Sorts the table rows in the order of the primary keys in inputArray.
+         *
+         * All row primary keys that are not in inputArray are not displayed (but not deleted).
+         *
+         * @param {string[]} inputArray - Array of row primary keys in the order the table will display the corresponding row.
+         */
+        function sortByArray(inputArray) {
+            // Check input.
+            if (!Array.isArray(inputArray)) {
+                throw new Error("inputArray must be an array, not " + typeof inputArray);
+            }
+
+            // Clear table body
+            var tbody = document.getElementById("tbody");
+            tbody.innerHTML = "";
+            for (var index = 0; index < inputArray.length; index++) {
+                var key = inputArray[index];
+                var row = rows[key];
+
+                // If the pk actually exists append the corresponding row to the body.
+                if (row !== undefined) {
+                    tbody.appendChild(row);
+                }
+            }
+        }
+
+        /**
+        * Parses input string for per column searching
+        * @param {string} input - string to parse
+        * @return {Object} - {column : "column", search : "search"}
+        */
+        function searchInputParser(input) {
+            if (input.length <= 2) return null;
+            // Check string is surrounded by quotes
+            if (input.charAt(0) !== "\"") return null;
+            if (input.charAt(input.length - 1) !== "\"") return null;
+
+            // Split input by colon;
+            var inputArr = input.split(":");
+            // Check contains two strings
+            if (inputArr.length != 2) return null;
+            var column = inputArr[0].slice(1);
+            var string = inputArr[1].slice(0, -1);
+
+            return [column, string];
+        }
+
+        /**
+         * Searches and displays all rows that contain the given input string.
+         *
+         * @param {string} input - string to match with row
+         */
+        function search(input) {
+            // Check input
+            if (typeof input !== "string") {
+                throw new Error("input must be a string, not of type " + typeof input);
+            }
+
+            var parsedInput = searchInputParser(input);
+            var columnSearch = "";
+            if (parsedInput != null) {
+                input = parsedInput[1];
+                columnSearch = parsedInput[0];
+            }
+            // For each record
+            input = input.toUpperCase();
+
+            var count = 0;
+            var resultCollection = allData.query(function (record, pk) {
+                var values = Object.values(record).join().toUpperCase();
+                var row = document.querySelector("[data-primary='" + pk + "']");
+
+                if (row == null) return false;
+
+                if (values.indexOf(input) !== -1) {
+                    row.setAttribute("data-display", "true");
+                    if (count % 2 == 1) {
+                        row.style.setProperty("background-color", "rgba(0,0,0,.05)");
+                    } else {
+                        row.style.setProperty("background-color", "white");
+                    }
+                    count++;
+                    return true;
+                } else {
+                    row.setAttribute("data-display", "false");
+                    return false;
+                }
+            });
+        }
+
+
+
+        /**
+         * All rows added after changing the text will be displayed the given color.
+         *
+         * @param {object} eventData - eventData.value is a string representing the css value to set the text color.
+         */
+        function setTextColor(eventData) {
+            // Check input
+            if (typeof eventData !== "object") {
+                throw new Error("eventData must be an object, not of type " + typeof eventData);
+            }
+
+            if (typeof eventData.value === "undefined") {
+                throw new Error("eventData packet must contain eventData.value");
+            }
+
+            if (typeof eventData.value !== "string") {
+                throw new Error("eventData.value must be a string, not of type " + typeof eventData.value);
+            }
+
+            if (eventData.value.toLowerCase() === "default") {
+                textColor = defaultColor;
+                return;
+            }
+
+            textColor = eventData.value.toLowerCase();
+        }
+
+
+        function checkAll() {
+            // Get all checkboxes
+            var allRowCheckboxes = body.querySelectorAll("input");
+
+            for (var i = 0; i < allRowCheckboxes.length; i++) {
+                var box = allRowCheckboxes[i];
+                box.checked = globalCheck.checked;
+            }
+        }
+
+        /**
+         * Set text content of the table title
+         * @author Elijah Blowes
+         * @param {Object} packet - Event packet object
+        */
+        function setTitle(packet) {
+
+            if (typeof packet !== "object") {
+                console.error("packet '" + packet + "' is not type 'Object'. \
+                      Got type '" + typeof packet + "'.");
+            }
+
+            var title = packet.value;
+            var label = packet.sysmeta.label;
+
+            if (label !== "string") {
+                console.error("packet '" + packet + "' is not a valid format. \
+                      Got label '" + packet.label + "'; expected label 'string'.");
+                throw new TypeError();
+            }
+            if (typeof title === "string" || title instanceof String) {
+                tableTitle.textContent = title;
+            } else {
+                console.error("title '" + title + "' is not of type 'string'. \
+                      Got type '" + typeof title + "'.");
+                throw new TypeError();
+            }
+        }
+
+        /**
+         * Add drag handles in between the column headers. Doesn't add drag
+         * handles to the last column or the check mark column.
+         * @author Elijah Blowes
+         * @param {HTMLElement} headerEl - The <tr> header element of the table.
+        */
+        function addDragHandles(headerEl) {
+            Object.keys(headerEl.children).forEach(function (key, index, arr) {
+                var header = headerEl.children[key];
+                // Do nothing for checkmark column
+                if (header.id === "select") {
+                    return;
+                }
+                // Append drag element to header unless last element.
+                // Header should contain only one child (a span).
+                if (index !== arr.length - 1 && header.childElementCount == 1) {
+                    header.innerHTML = header.innerHTML + "<span id='col" + index + "' onmousedown='dragCol(this)' style='float:right;cursor:e-resize;color:lightgray;'>|</span>";
+                }
+            });
+        }
+
+        /**
+         * Remove the drag handles from the table column headers.
+         * @author Elijah Blowes
+         * @param {HTMLElement} headerEl - The <tr> header element of the table.
+        */
+        function removeDragHandles(headerEl) {
+            Object.keys(headerEl.children).forEach(function (key, index, arr) {
+                var header = headerEl.children[key];
+                // Do nothing for checkmark column
+                if (header.id === "select") {
+                    return;
+                }
+                // if not the last element and the element has another child
+                // (assume to be the drag handle).
+                if (index !== (arr.length - 1) && header.childElementCount > 1) {
+                    // Remove the last element which should be the drag handle
+                    header.children[1].remove();
+                }
+            });
+        }
+
+        /**
+         * Create new table header
+         *
+         * @param {string[]} headerArray - Header values representing each column in the table.
+         */
+        function createHeader(headerArray) {
+            var newHeader = document.createElement("tr");
+            newHeader.setAttribute("id", "header");
+
+            var selectable = fw.attribs("selectable");
+            if (selectable == "multi" || selectable === "multi + single") {
+                var checkTemplate = document.getElementById("checkboxTemplate");
+                var checkEntry = checkTemplate.querySelector("div").cloneNode(true);
+                var entry = document.createElement("th");
+                entry.appendChild(checkEntry);
+                entry.style.setProperty("width", "50px");
+                entry.setAttribute("id", "select");
+                globalCheck = entry.querySelector("input");
+                globalCheck.addEventListener("click", checkAll);
+                newHeader.appendChild(entry);
+                if (fw.attribs("display header") !== "true") {
+                    entry.style.setProperty("top", "0px");
+                }
+            }
+
+            //var offset = (selectable === "true" ? 1 : 0);
+            for (var i = 0; i < headerArray.length; i++) {
+                var h = headerArray[i];
+                var entry = document.createElement("th");
+
+                entry.id = i + "headCol";
+                entry.innerHTML = "<span id=\"head" + i + "\">&nbsp &nbsp" + h + "</span>" + entry.innerHTML;
+                // Add on sort button.
+                entry.className = "headCol noSelect";
+                entry.style.setProperty("width", colWidths[i] * 100 + "%");
+
+                if (fw.state === "DASHBOARD" && fw.attribs("enable sorting") === "true") {
+                    var sortElem = "<svg id='sort-" + h + "' style='position: relative; width:20px; height:20px; cursor:pointer'>" + "<path id='sortArrow" + i + "' fill='#777' d='" + upDownArrow + "'/></svg>&nbsp;";
+                    entry.innerHTML += sortElem;
+                    var svg = entry.children[0];
+                    svg.setAttribute("data-title", h);
+                    svg.setAttribute("data-value", "false");
+                    svg.addEventListener('click', function (event) {
+                        var title = event.target.getAttribute("data-title");
+                        var value = event.target.getAttribute("data-value");
+
+                        if (title == null || value == null) {
+                            return;
+                        }
+
+                        sort(title, value);
+
+                        // Loop through header children and change all arrows to up down
+                        var headerRow = document.getElementById("header");
+                        for (var i = 0; i < headerRow.children.length; i++) {
+                            var item = headerRow.children[i];
+                            item.children[1].children[0].setAttribute("d", upDownArrow);
+                        }
+
+                        if (value === "true") {
+                            event.target.setAttribute("data-value", "");
+                            event.target.children[0].setAttribute("d", downArrow);
+                        } else {
+                            event.target.setAttribute("data-value", "true");
+                            event.target.children[0].setAttribute("d", upArrow);
+                        }
+                    }, false);
+                }
+
+                if (fw.attribs("display header") === "true") {
+                    entry.style.setProperty("top", "35px");
+                } else {
+                    entry.style.setProperty("top", "0px");
+                }
+
+                newHeader.appendChild(entry);
+            }
+            return newHeader;
+        }
+
+
+        /**
+         * MouseDown event - move column handles in header to adjust width (design only)
+         * @param col
+         */
+        function dragCol(col) {
+            var selectable = fw.attribs("selectable");
+            var portions = getHeaderPortions();
+
+            // convert all to pixels
+            var offset = (selectable === "multi" || selectable === "multi + single" ? 1 : 0);
+            for (var i = offset; i < header.childElementCount; i++) {
+                header.children[i].style.setProperty("width", header.offsetWidth * portions[i - offset] + "px");
+            }
+
+            initColWidths = [];
+            winScale = fw.func("winScale");
+            mouseStartX = event.screenX * winScale;
+            colObj = col.offsetParent;
+            colStartWidth = colObj.offsetWidth;
+            initHeaderWidth = header.offsetWidth;
+
+            for (var i = 0; i < header.childElementCount; i++) {
+                // Save new column sizes except last
+                initColWidths.push(header.offsetWidth * portions[i] + "px");
+            }
+
+            //fw.func("endEdit", "cancel");
+            // Stop framework moving widget
+
+            table.addEventListener("mousemove", mouseMove);
+            table.addEventListener("mouseup", mouseUp);
+            table.style.cursor = "e-resize";
+
+            event.stopPropagation();
+        }
+
+        /**
+         * Handles dragging a column drag handle
+         * @author Elijah Blowes
+         * @param {Event} event
+         */
+        function mouseMove(event) {
+            // If the table is selectable add an offset to the columns
+            var selectable = fw.attribs("selectable");
+            var offset = (selectable === "multi" || selectable === "multi + single" ? 1 : 0);
+
+            var selColIndex = parseInt(colObj.id) + offset;
+            var curColElem = header.children[selColIndex];
+            var nextColElem = header.children[selColIndex + 1];
+
+            // Width of current header text and current column width
+            var headTextWidth = curColElem.children[0].offsetWidth;
+            var colWidth = curColElem.offsetWidth
+
+            var nextHeadTextWidth = nextColElem.children[0].offsetWidth;
+            var nextColWidth = nextColElem.offsetWidth;
+
+            var dragRelative = colStartWidth + event.screenX * winScale - mouseStartX;
+
+            // Make sure that we aren't dragging smaller than the size of the header text
+            // AND that we aren't dragging past the next column
+            if ((((headTextWidth + 8) < dragRelative) && (dragRelative < colWidth + nextColWidth - (nextHeadTextWidth + 8)))) {
+                // Combine width
+                var combinedWidth = nextColElem.offsetWidth + colObj.offsetWidth;
+                colObj.style.width = (colStartWidth + event.screenX * winScale - mouseStartX) + "px";
+
+                // next col width
+                nextColElem.style.width = combinedWidth - (colStartWidth + event.screenX * winScale - mouseStartX) + "px";
+            }
+            fw.func("status", "Header Width: " + parseInt(colObj.style.width) + "px");
+            event.stopPropagation();
+        }
+
+
+        function mouseUp() {
+            table.removeEventListener("mousemove", mouseMove);
+            table.removeEventListener("mouseup", mouseUp);
+            table.style.cursor = "default";
+            var portions = getHeaderPortions()
+            fw.func("dirty");
+
+            // Convert sizes to percentages.
+            var offset = 0;
+            for (var i = 0; i < header.childElementCount; i++) {
+                if (header.children[i].id === "select") {
+                    offset = 1;
+                    continue;
+                }
+                header.children[i].style.width = portions[i - offset] * 100 + "%";
+            }
+            event.stopPropagation();
+            return false;
+        }
+
+
+        // Returns the portions of each column.
+        function getHeaderPortions() {
+            var headerWidths = [];
+            var sum = 0;
+            for (var i = 0; i < header.childElementCount; i++) {
+                if (header.children[i].id === "select") {
+                    sum += 50;
+                    continue;
+                }
+                var colWidth = parseInt(header.children[i].offsetWidth);
+                headerWidths.push(+colWidth);
+                sum += +colWidth;
+            }
+
+            var headerPortions = [];
+            for (var i = 0; i < headerWidths.length; i++) {
+                headerPortions.push(headerWidths[i] / sum);
+            }
+
+            return headerPortions;
+        }
+
+
+        // Function generator for sorting
+        function propComparator(prop, ascending) {
+            return function (a, b) {
+                var colAValue = a.children[prop].innerHTML.toUpperCase();
+                var colBValue = b.children[prop].innerHTML.toUpperCase();
+                if (ascending) {
+                    return colAValue < colBValue ? -1 : 1;
+                } else {
+                    return colAValue > colBValue ? -1 : 1;
+                }
+            }
+        }
+
+
+        // Client event for sorting colums
+        function sortRows(eventData) {
+            var data = eventData.value;
+            var col = data.col;
+            var asc = data.asc;
+
+            sort(col, asc);
+        }
+
+        // Client event for sorting by a given sorting function
+        function sortByFunction(eventData) {
+            var data = eventData.value;
+            var sortFunction = data.sortFunction;
+            var col = data.col;
+
+            sort(col, null, sortFunction);
+        }
+
+
+        // Sort rows based on given col. True fo ascending, false for decending
+        // optional sortFunction parameter if called from sortByFunction
+        function sort(col, ascending, sortFunction) {
+            col = col.toLowerCase();
+            if (col === null)
+                return;
+
+            var rows = document.getElementById("tbody").children;
+            var arr = Array.prototype.slice.call(rows)
+            var colIndex = headerValues.indexOf(col);
+            var sortedRows =  sortFunction ? arr.sort(sortFunction) :  arr.sort(propComparator(colIndex, ascending));
+            // var sortedRows = arr.sort(propComparator(colIndex, ascending));
+            var tbody = document.getElementById("tbody");
+            //tbody.rows = sortedRows;
+            tbody.innerHTML = "";
+            for (var i = 0; i < sortedRows.length; i++) {
+                tbody.appendChild(sortedRows[i]);
+            }
+        }
+
+
+        // Create row from given array.
+        function createRow(dataObj, pk) {
+            var newRow = document.createElement("tr");
+            // Update pk data-tag
+
+            if (pk === undefined) {
+                return;
+            }
+
+            newRow.setAttribute("data-primary", pk);
+
+            // Add checkboxes if selectable.
+            var selectable = fw.attribs("selectable");
+            if (selectable == "multi" || selectable === "multi + single") {
+                var checkTemplate = document.getElementById("checkboxTemplate");
+                var checkEntry = checkTemplate.querySelector("div").cloneNode(true);
+                var entry = document.createElement("td");
+
+                if (fw.attribs("color rows") === "true") {
+                    entry.style.setProperty("background-color", fw.attribs("row color"));
+                }
+
+                entry.appendChild(checkEntry);
+                entry.setAttribute("class", "checkbox-row");
+                entry.style.setProperty("width", "50px")
+                newRow.appendChild(entry);
+            }
+
+            newRow.setAttribute("data-display", "true");
+            // Attach click event listener.
+            newRow.addEventListener("click", rowSelected);
+            var containsHeader = false;
+            for (var i = 0; i < headerValues.length; i++) {
+                var data = document.createElement("td");
+                data.style.setProperty("color", textColor);
+
+                if (fw.attribs("color rows") === "true") {
+                    data.style.setProperty("background-color", fw.attribs("row color"));
+                }
+
+                var innerItem = dataObj[headerValues[i]];
+                if (typeof innerItem !== "undefined") {
+                    containsHeader = true;
+                    if (typeof innerItem !== "string" && typeof innerItem !== "number") {
+                        data.appendChild(entry);
+                    } else {
+                        data.innerHTML = innerItem;
+                    }
+                }
+
+                newRow.appendChild(data);
+            }
+            if (containsHeader) return newRow;
+            return null;
+        }
+
+
+        // Takes payload where the data is the string of the pk to be removed.
+        function deleteRows(payload) {
+            deleteRowsFunc(payload.value);
+            updateRowCss();
+        }
+
+
+        // Takes payload where the data is the string of the pk to be removed.
+        function deleteAllRows(payload) {
+            //TODO this can be optimised by just clearing all child
+            if (allData !== undefined) {
+                allData = undefined;
+                body.innerHTML = '';
+                rows = {};
+                previousSelected = undefined;
+            }
+        }
+
+        // Select row event. Abiltity to select row from an event.
+        function highlightRow(packet) {
+            if (packet === undefined) {
+                throw new TypeError("event packet is undefined");
+                return null;
+            }
+            if (typeof packet.value !== "string" && !(packet.value instanceof String)) {
+                throw new TypeError("packet.value is of type '" + typeof packet.value + "'. Expected type 'string'.");
+                return null;
+            }
+            var pk = packet.value;
+            if (!rows[pk]) {
+                throw new Error("primary key '" + pk + "' does not exist in table.");
+                return null;
+            }
+
+            // Unbold previous
+            if (previousSelected !== undefined) {
+                var row = rows[previousSelected]
+                row.classList.remove("selected");
+            }
+            if (pk !== previousSelected) {
+                var row = rows[pk];
+                row.classList.add("selected");
+            }
+
+            if (fw.attribs("selectable") !== "none") {
+                if (pk === previousSelected) {
+                    var record = allData.filter(allData.headers, [pk]);
+                    fw.fireEvent("unselected", record);
+                    previousSelected = undefined;
+                } else {
+                    var record = allData.filter(allData.headers, [pk]);
+                    fw.fireEvent("selected", record);
+                    previousSelected = pk;
+                }
+            }
+        }
+
+        // handle event for when a row is selected.
+        var previousSelected;
+        function rowSelected(event) {
+
+            var rowElement = event.currentTarget;
+            var pk = rowElement.getAttribute("data-primary");
+            if (event.target.classList.contains("checkmark") || event.target.classList.contains("checkmark-input")) {
+                event.stopImmediatePropagation();
+                return false;
+            }
+            // Get primary key from data tag.
+            var selectable = fw.attribs("selectable");
+            if (selectable === "single" || selectable === "multi + single") {
+                highlightRow({ value: pk });
+            }
+
+            var record = allData.filter(allData.headers, [pk]);
+            // headerValues = record.headers;
+            fw.fireEvent("pressed", record);
+        }
+
+
+        // add row to table or update row if it already exists.
+        function addRow(pk, row) {
+            // Force background to white if coloured rows is false
+            if (fw.attribs("color rows") === "false") {
+                //row.style.setProperty("background-color", "white");
+            } else {
+                row.style.setProperty("background-color", fw.attribs("row color") + " !important");
+            }
+            // Add hover if selected
+            if (fw.attribs("color on hover") === "true") {
+                row.classList.add("rowHover");
+            }
+
+            if (typeof rows[pk] !== "undefined") {
+                // Check if row already exists.
+                var oldRowElement = rows[pk];
+                body.replaceChild(row, oldRowElement);
+            } else {
+                body.appendChild(row);
+            }
+
+            rows[pk] = row;
+
+            if (fw.attribs("auto scroll") === "true") {
+                // show appended record on bottom
+                table.scrollIntoView(false);
+            }
+            if (pk === previousSelected) {
+                previousSelected = undefined;
+                highlightRow({ value: pk });
+            }
+        }
+
+
+        /**
+         * Delete rows with the given primary keys.
+         * Do not use this for filtering!
+         *
+         * @param {string[]} pk - Array of primary keys of rows to remove.
+         */
+        function deleteRowsFunc(pk) {
+            // Check if input is an array
+            if (typeof pk == "undefined") {
+                return;
+            }
+
+            var pkArray;
+            if (!Array.isArray(pk)) {
+                pkArray = [pk];
+            } else {
+                pkArray = pk;
+            }
+
+            // loop over array
+            for (var i = 0; i < pkArray.length; i++) {
+                pk = pkArray[i];
+                var row = rows[pk];
+                if (!row) {
+                    continue;
+                }
+                // Check if it is the previously selected.
+                if (previousSelected === pk) {
+                    previousSelected = undefined;
+                }
+
+                // Remove from dictionaries
+                delete rows[pk];
+                allData.remove(pk);
+                body.removeChild(row);
+            }
+            return;
+        }
+
+
+        // set header title to table.
+        function setHeader(array, element) {
+            headerValues = array;
+            header.parentNode.replaceChild(element, header);
+            header = element;
+            if (fw.attribs("display column titles") !== "true") {
+                header.style.setProperty("display", "none");
+            }
+        }
+
+        // Note - only for selected records (use the statestore if you need all the data in the table)
+        function fw_form() {
+            var selectedRecords = [];
+
+            if (fw.attribs("selectable") === "multi" || fw.attribs("selectable") === "multi + single") {
+                // build sensacollection of all rows selected
+                var rowKeys = Object.keys(rows);
+
+                for (var i = 0; i < rowKeys.length; i++) {
+                    var row = rows[rowKeys[i]];
+                    // Check if selected.
+                    if (row.querySelector("input").checked) {
+                        selectedRecords.push(rowKeys[i]);
+                    }
+                }
+                return allData.filter(allData.columns, selectedRecords);
+
+            } else if (fw.attribs("selectable") === "single") {
+                // Return all rows
+                if (tablePk === undefined) {
+                    return null;
+                }
+
+                var collection = new SensaCollection(allData.headers, tablePk);
+
+                if (previousSelected !== undefined) {
+                    collection.add(allData.get(previousSelected));
+                    return collection;
+                } else {
+                    // return null if no row is selected.
+                    return null;
+                }
+
+            } else {
+                return allData
+            }
+            return null;
+        }
+
+        // New record received through a client event.
+        function receiveValue(packet) {
+            //packet = JSON.parse(JSON.stringify(packet));            // Need to clone inside the table for IE as cloning in the framework doesn't work
+            // Check if the table is already populated.
+            let tablePopulated = true;
+            if (Object.keys(rows).length == 0) {
+                tablePopulated = false;
+            }
+
+            if (packet.sysmeta.label.toLowerCase() === "sensacollection") {
+                if (tablePk == null) {
+                    tablePk = packet.value.pk;
+                }
+
+
+                var data = packet.value;
+                data.headers = data.headers.map(function (header) { return header.toLowerCase() });
+                data = new SensaCollection(data.headers, tablePk, { data: data.data });
+
+                var dataDifference;
+
+                if (typeof allData === "undefined") {
+                    allData = data;
+                    dataDifference = allData;
+
+                }
+
+                // set headers if they havn't been manually set.
+                if (headerValues.length === 0) {
+                    headerValues = data.columns;
+                    var headerElement = createHeader(headerValues);
+                    setHeader(headerValues, headerElement);
+                    // Set data collection
+                    allData = data;
+                    dataDifference = allData;
+                } else if (typeof dataDifference === "undefined") {
+                    dataDifference = allData.difference(data);
+                }
+
+                dataDifference.forEach(function (record, pk) {
+                    // Get row difference and only update if row already in dom
+                    var row;
+                    if (typeof rows[pk] === "undefined") {
+                        row = createRow(record, pk);
+                        if (row == null) return; // No matching columns
+                        addRow(pk, row);
+                        allData.add(record);
+                    } else {
+                        row = rows[pk];
+
+                        // Get items that are diffrent in row.
+                        var rowInfo = allData.get(pk);
+                        for (var i = 0; i < Object.keys(rowInfo).length; i++) {
+                            var key = Object.keys(rowInfo)[i];
+                            if (rowInfo[key] !== record[key]) {
+                                var index = i;
+                                // Add checkboxes if selectable.
+                                var selectable = fw.attribs("selectable");
+                                if (selectable == "multi" || selectable === "multi + single") {
+                                    index += 1;
+                                }
+
+                                if (!(key in record)) continue;
+
+                                row.childNodes[index].innerHTML = record[key];
+                            }
+                        }
+
+                    }
+
+                });
+
+            } else if (packet.sysmeta.label.toLowerCase() === "number" || packet.sysmeta.label.toLowerCase() === "string") {
+                var value = packet.value;
+                var channel = packet.sysmeta.channel;
+                var instance = channel.split("/")[2];
+                var scope = channel.split("/")[3];
+
+                var random = Math.random();
+
+                // Check headers have been set and match the scope
+                if (headerValues.length === 0) {
+                    //headerValues = ["instance", scope];
+                    //var headerElement = createHeader(headerValues);
+                    //setHeader(headerValues, headerElement);
+                    allData = new SensaCollection(headerValues, "instance");
+                } else if (headerValues.indexOf(scope.toLowerCase()) === -1) {
+                    return;
+                }
+
+
+
+                // Create array correct size.
+                var array = [];
+                for (var i = 0; i < headerValues.length; i++) {
+                    array.push("");
+                }
+
+                // Convert to correct data structure
+                var row = {
+                    pk: "instance",
+                    headers: ["instance", scope],
+                    data: {}
+
+                };
+
+                row.data[instance] = array;
+                row.data[instance][0] = instance;
+                row.data[instance][1] = value;
+
+                receiveValue({ value: row, sysmeta: { label: "sensacollection" } });
+
+            } else {
+                fw.status({
+                    message: "Data isn't in a valid format, rejected"
+                });
+                return;
+            }
+
+            search(document.getElementById("searchInp").value);
+
+            // Scroll table to top if populated.
+            if (!tablePopulated) {
+                document.getElementById("container").scrollTop = 0;
+            }
+        }
+
+
+        // Updates the coloring of the rows.
+        function updateRowCss() {
+            // Update css rows
+            var filteredRows = document.querySelectorAll('tr[data-display="true"]');
+            for (var i = 1; i < filteredRows.length; i += 2) {
+                var row = filteredRows[i];
+                row.style.setProperty("background-color", "rgba(0,0,0,.05)");
+            }
+
+            for (var i = 0; i < filteredRows.length; i += 2) {
+                var row = filteredRows[i];
+                row.style.setProperty("background-color", "white");
+            }
+        }
+
+
+        // Takes an Object of arrays and builds out elements and adds them to the table.
+        function addRows(rowsObject) {
+            // loop through
+            var recKeys = Object.keys(rowsObject);
+            for (var i = 0; i < recKeys.length; i++) {
+                var row = createRow(rowsObject[recKeys[i]], recKeys[i]);
+                // Add row element to rows data
+                addRow(recKeys[i], row);
+            }
+        }
+
+        // API actions for dashboard mode
+        /**
+         * Function that is run once the widget has loaded.
+         * @param mode - What mode sensahub is currently in - DASHBOARD, DESIGN, FLOWS.
+         */
+        function fw_dashStart(mode) {
+            // Remove default Text
+            var defaultText = document.getElementById("default-text");
+            if (defaultText) {
+                //defaultText.remove(); NOT IE compatible
+                defaultText.parentNode.removeChild(defaultText);
+            }
+
+            colWidths = [];
+            // Set titlebar up.
+            tableTitle.innerText = fw.attribs("title");
+            table.style.setProperty("font-size", fw.attribs("font size") + "px");
+
+
+            if (fw.attribs("text color") !== "") {
+                defaultColor = fw.attribs("text color").toLowerCase();
+                textColor = fw.attribs("text color").toLowerCase();
+            }
+
+            if (fw.attribs("columns") !== "") {
+                // Iterate over and strip all whitespace
+                headerValues = fw.attribs("columns").split(",").map(function (item) {
+                    return item.trim().toLowerCase();
+                });
+
+                // IDK what this is for? - DG 0520
+                headerUpper = fw.attribs("columns").split(",").map(function (item) {
+                    return item.trim().toUpperCase();
+                });
+            }
+
+            if (headerValues.length > 0 && header !== null && header.childElementCount <= 1) {
+                var colWidth = fw.attribs("colWidths");
+                if (colWidth !== "") {
+                    colWidths = colWidth.split(",");
+                    // Extract widths from settings
+                }
+                if (colWidths.length === 0) {
+                    var evenCol = table.offsetWidth / headerValues.length;
+                    for (var i = 0; i < headerValues.length; i++) {
+                        colWidths.push(evenCol);
+                        // Create even spacing columns
+                    }
+                    //fw.func("SetAttrib", "colWidths", colWidths.join(","))
+                }
+
+                var headers = createHeader(headerValues);
+                setHeader(headerValues, headers);
+            }
+            if (fw.attribs("display header") === "true") {
+                // Need to add top: 35px to all thead th elements
+                var hList = header.querySelectorAll("th");
+                var arr = Array.prototype.slice.call(hList);
+                arr.forEach(function (item, index, array) {
+                    item.style.setProperty("top", "35px");
+                });
+                headerBar.style.setProperty("display", "block");
+                // Show search if it is enabled.
+                if (fw.attribs("enable search") === "true") {
+                    searchInp.style.setProperty("display", "block");
+                }
+            } else {
+                // Need to remove offset
+                var hList = header.querySelectorAll("th");
+                var arr = Array.prototype.slice.call(hList);
+                arr.forEach(function (item, index, array) {
+                    item.style.setProperty("top", "0px");
+                });
+                headerBar.style.setProperty("display", "none");
+                searchInp.style.setProperty("display", "none");
+            }
+
+            return "OK";
+        }
+
+
+        function saveTable() {
+            alert("Save function not implemented yet.");
+        }
+
+        // API startup actions for toolbox. Return "OK" if startup OK else return an error string
+        function fw_toolStart(mode) {
+            return "OK";
+        }
+
+        // API startup actions when first created by dropping in design mode. Return "OK" if startup OK else return an error string
+        function fw_newWidget(mode) {
+            return fw_dashStart();
+        }
+
+        // API called when switching to design mode (optional, delete if not using)
+        function fw_startDesign() {
+            return true;
+        }
+        
+        // API called to manage scaling
+        function fw_scale(scaleX, scaleY) {
+            x_scale = scaleX;
+            y_scale = scaleY;
+
+            //fw.widgetID.style.setProperty("width", (options.settings.iniWidth * scaleX) + "px");
+            fw.widgetID.style.setProperty("height", (options.settings.iniHeight * scaleY) + "px");
+
+            // Scale headers
+            var portions = getHeaderPortions();
+            if (portions[0] === "NaN")
+                return true;
+
+            return true;
+        }
+
+        // API called when widget edit starts (return false to stop editor, "NOSCALE", "NOVERT", "NOHORIZ", "NOVERT,NOHORIZ" to customise scaling)
+        function fw_startEdit() {
+            //fw_dashStart();
+            addDragHandles(header);
+            return true;
+        }
+
+        // API called when widget edit finishes (apply edit changes here)
+        function fw_endEdit(mode) {
+            // create a new array of the columns, trimmed and in lower case.
+            // don't want to edit the saved value.
+            var columns = fw.attribs("columns").split(",").map(function (item) {
+                return item.toLowerCase().trim();
+            });
+
+            // Update search settings.
+            if (fw.attribs("enable search") === "true") {
+                searchInp.style.setProperty("display", "block");
+            } else {
+                searchInp.style.setProperty("display", "none");
+            }
+
+            // Check if columns have changed
+            if (columns.join(",") !== headerValues.join(",")) {
+                // clear the saved column widths
+                fw.func("SetAttrib", "colWidths", "");
+            } else {
+                // save column widths.
+                fw.func("SetAttrib", "colWidths", getHeaderPortions().join(","));
+            }
+
+            // Save the columns as the lowercase, trimmed version.
+            // This will be displayed in the settings toolbox as column1,column2
+            // even if it was added by the user as Column1, Column2.
+            fw.func("SetAttrib", "columns", columns.join(","));
+
+            while (header.childElementCount != 0) {
+                header.removeChild(header.children[0]);
+            }
+
+            if (fw.attribs("columns") === "") {
+                headerValues = [];
+            }
+
+            // If set to scale is checked. Rescale
+            if (fw.attribs("enable scaling") === "true") {
+                fw_scale(x_scale, y_scale);
+            }
+
+            removeDragHandles(header);
+            fw_dashStart();
+            return true;
+        }
+
+        function fw_db(channel, scope, data) {
+        }
+
+        // API called for incoming channel events
+        function fw_feed(channel, client, data) {
+            try {
+                data.value = JSON.parse(data.value);
+            } catch (e) {
+            }
+            receiveValue(data);
+        }
+
+        // Initialize widget framework API - DO NOT ADJUST OR DELETE
+        fw.ready();
+    </script>
+</body>
+</html>

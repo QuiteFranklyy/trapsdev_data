@@ -1,0 +1,574 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Image (Sensahub Dashboard Widget)</title>
+    <style>
+        body {
+            overflow: hidden;
+            font-family: 'Open Sans';
+            font-size: 16px;
+        }
+
+        .aspectratio {
+            background-color: transparent !important;
+
+            object-fit: contain !important;
+        }
+
+        .vid {
+            position: unset;
+            top: 0px;
+            left: 0px;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+        }
+
+        .img {
+            height: 100%;
+            width: 100%;
+            object-fit: fill;
+        }
+    </style>
+
+</head>
+<body id="body" ondragstart="return false;" ondrop="return false;">
+    <div id="group">
+        <div id="widget" draggable="false" style="position: relative; height: 100px; width: 100px; border: 1px solid #808080; border-radius: 3px; position: absolute; left: 0px; top: 0px;"></div>
+    </div>
+    
+    <script src="api/Client.js"></script>
+    <script>
+        "use strict";
+
+        //#region --- Widget Settings ---
+        var options = {
+            settings: {
+                "category": "widget",
+                "type": window.location.pathname.split("/").slice(-1)[0].split(".")[0].replace("%20", " "),
+                "iniHeight": parseInt(widget.style.height),
+                "iniWidth": parseInt(widget.style.width),
+                "author": "Sensavation",
+                "tbTooltip": "Image",
+                "tooltip": "",
+                "version": "202605",
+                "group": "visualisation",
+                "zIndex": "ZINDEX_DEFAULT",
+                "scaling": true,
+                "disabled": false,
+                "help": { "type": "file", "source": "help/widgets/Image.md" }
+            },
+            clientEvents: {
+                inputEvents: {
+                    "receive value": receiveValue,
+                    "get value": getValue,
+                    "set image": eventImage
+                },
+                outputEvents: [
+                    "none",
+                    "clicked"
+                ]
+            },
+            serverEvents: {
+                inputEvents: {
+                    "feed": {
+                        "function": fw_feed
+                    },
+                    "ini": {
+                        "function": fw_feed
+                    },
+                    "set image": {
+                        "function": eventImage
+                    }
+                },
+                outputEvents: [
+                    "clicked"
+                ]
+            },
+            dataTypes: {
+                "feed": ["string", "number"],
+                "ini": ["string", "number"],
+                "set image": ["string"],
+                "set binary": ["string"]
+            },
+            attribs: {
+                "3D shadow": {
+                    "type": "checkbox",
+                    "default": "false",
+                    "tooltip": "3D Shadow below image",
+                    "group": "General"
+                },
+                "border width": {
+                    "type": "input",
+                    "default": 0,
+                    "group": "Widget Specific",
+                    "tooltip": "Width of border around image"
+                },
+                "opacity": {
+                    "type": "input",
+                    "default": 1,
+                    "group": "Widget Specific",
+                    "tooltip": "0 is fully transparent, 1 is fully opaque"
+                },
+                "image": {
+                    "type": "file",
+                    "default": "",
+                    "group": "Widget Specific",
+                    "tooltip": "Select image file"
+                },
+                "location": {
+                    "type": "input",
+                    "default": "",
+                    "group": "Widget Specific",
+                    "tooltip": "Leave blank for the user files folder"
+                },
+                "value clicked": {
+                    "type": "input",
+                    "tooltip": "Value to send when pressed",
+                    "default": "1",
+                    "group": "Widget Specific"
+                },
+                "maintain aspect ratio": {
+                    "type": "checkbox",
+                    "default": "true",
+                    "group": "Widget Specific",
+                    "tooltip": "Maintain the aspect ratio of the uploaded image",
+                },
+                "background": {
+                    "type": "dropdown",
+                    "tooltip": "Select background color",
+                    "options": "none, black, blue, green, grey, red, orange",
+                    "default": "none",
+                    "group": "Widget Specific",
+                },
+                "jump to screen": {
+                    "type": "input",
+                    "default": "",
+                    "tooltip": "Name of screen to jump to on click",
+                    "group": "Widget Specific"
+                }
+            }
+        };
+        //#endregion
+
+        // For autorotating images taken by a camera: https://stackoverflow.com/a/46814952/2328253
+
+        //#region --- Declarations ---
+        var img = new Image();
+        img.classList.add("img");
+
+        var vid = document.createElement("video")
+        vid.setAttribute("loop", "");
+        vid.setAttribute("controls", "");
+        vid.classList.add("vid");
+
+        var imageLoc = "";
+        var imageFullName;
+        var aspectRationProp;
+        //#endregion
+
+        // Load image from events (client or server)
+        function eventImage(file) {
+            // Check if dataURL
+            if (parent.isDataURL(file.value)) {
+                var type = file.value.match(/[a-z]+\/[a-z]+/i);
+                type = (type.length === 1) ? type[0] : undefined;
+                if (type === undefined) {
+                    throw new TypeError("EventImage - Could not find file type for data url '" + file.value + "'.")
+                }
+                switch (type.split("/")[0].toUpperCase()) {
+                    case "IMAGE":
+                        setImage(file.value, "DATAURL");
+                        break;
+                    case "VIDEO":
+                        setVideo(file.value);
+                        break;
+                }
+
+            } else {
+                var split = file.value.split(".");
+                if (file.value.match(/.(mp4|ogg|webm|mov)$/i)) {
+                    setVideo(file.value);
+                } else {
+                    var split = file.value.split("/");
+                    var fileName = split[split.length - 1];
+                    setLocation(split.splice(0, split.length - 1).join("/") + "/");
+                    setImage(fileName);
+                }
+            }
+        }
+
+        //#region --- Widget specific functions ---
+
+        function setLocation(location) {
+            imageLoc = location;
+            if (fw.state !== "TOOLBOX") {
+                fw.func("SETATTRIB", "location", location);
+            }
+        }
+
+        function setVideo(fileName) {
+            console.log(fileName);
+            img.src = "";
+            img.style.setProperty("display", "none");
+            vid.style.setProperty("display", "");
+            fw.widgetID.appendChild(vid);
+            // vid.src = "/userfiles/" + fileName;
+
+            var dataUrl;
+            // sometimes we get sent just the filename without extension
+            if (fileName.length < 4) {
+                fileName = fileName + ".jpg";             // can't have extension so add it
+            }
+            var ext = fileName.substring(fileName.length - 4).toUpperCase();
+            if (ext !== ".MP4" && ext !== ".MOV" && ext !== ".OGG" && ext !== "WEBM") {
+                fileName = fileName + ".mp4";
+            }
+            if (imageLoc === "") {
+                fileName = "/userfiles/" + fileName;
+            } else {
+                fileName = imageLoc + fileName;
+            }
+            console.log(fileName);
+            vid.src = fileName;
+        }
+
+        function setImage(imageName, mode) {
+            vid.style.setProperty("display", "none");
+            vid.src = "";
+
+            /*if (!iOS) {
+                img.style.setProperty("display", "unset");
+
+            }
+            else { */
+                // if the image can't be found, it displays the default image.
+                img.onerror = function() {
+                    img.onerror = null; 
+                    img.src = "/images/blank.png";
+                }
+                img.style.setProperty("display", "block");
+                
+                //img.style.setProperty("object-fit", "contain");
+
+            /*}*/
+
+            var dataUrl;
+            if (mode && mode.toUpperCase() === "DATAURL") {
+                dataUrl = imageName
+            }
+
+            if (imageName === "") {
+                // Use default image
+                imageFullName = "/images/blank.png";
+            }
+            else {
+                // sometimes we get sent just the filename without extension
+                if (imageName.length < 4) {
+                    imageName = imageName + ".jpg";             // can't have extension so add it
+                }
+                var ext = imageName.substring(imageName.length - 4).toUpperCase();
+                if (ext !== ".JPG" && ext !== ".PNG" && ext !== ".BMP" && ext !== "JFIF" && ext !== "JPEG" && ext !== ".JPE" && ext !== ".GIF") {
+                    imageName = imageName + ".jpg";
+                }
+                if (imageLoc === "") {
+                    imageFullName = "/userfiles/" + imageName;
+                } else {
+                    imageFullName = imageLoc + imageName;
+                }
+            }
+
+            img.onload = function () {
+                if (fw.state !== "TOOLBOX") {
+                    fw.widgetID.style.setProperty("border", fw.attribs("border width") + "px solid #808080");
+                    img.style.setProperty("opacity", fw.attribs("opacity"));
+                    if (fw.attribs("maintain aspect ratio") === "true") {
+                        scaleAndCentre();
+                    }
+                }
+            };
+            img.src = (dataUrl === undefined ? imageFullName : dataUrl);
+            fw.widgetID.appendChild(img);
+            if (fw.state !== "TOOLBOX") {
+                var split = imageName.split(".");
+                var name = split.splice(0, split.length - 1).join(".");
+                fw.func("setAttrib", "image", name);
+            }
+        }
+
+        /**
+         * Scale and centre an image to the confines of the widget container while maintaining aspect ratio.
+         * @author Elijah Blowes
+         */
+        function scaleAndCentre() {
+            if (fw.attribs("maintain aspect ratio") !== "true") return;
+            if (imageFullName === "/images/blank.png") return;
+
+            
+            addAspectRatio();
+
+            /*
+            // Get the size of the widget container
+            var widgetContainer = document.getElementById("widget");
+            if (widgetContainer == null) return;
+
+            var widgetHeight = widgetContainer.style.getPropertyValue("height");
+            var widgetWidth = widgetContainer.style.getPropertyValue("width");
+
+            // If the width of the image is greater than or equal to
+            // the container
+            if (img.width >= parseInt(widgetWidth)) {
+                if (img.classList.contains("height")) img.classList.remove("height");
+                if (!(img.classList.contains("width"))) img.classList.add("width");
+            }
+            // If the height of the image is equal to or greater than
+            // the container
+            if (img.height >= parseInt(widgetHeight)) {
+                // Set height to height of container
+                if (img.classList.contains("width")) img.classList.remove("width");
+                if (!(img.classList.contains("height"))) img.classList.add("height");
+            }
+             
+            // Center
+          
+            //Ios centers the wdith on its own and doesn't need the image to be pulled to the left
+            if (!iOS()) {
+                img.style.setProperty("top", (parseFloat(widgetHeight) / 2) - (img.height / 2) + "px");
+                img.style.setProperty("left", (parseFloat(widgetWidth) / 2) - (img.width / 2) + "px");
+            }*/
+        }
+
+        /**
+         * Add aspect ratio class from image
+         * Note: This is kind of unnecessary. DD - Why?? Then don't include it!
+         * @author Elijah Blowes
+         */
+        function addAspectRatio() {
+
+            img.classList.add("aspectratio");
+
+            /*
+            if (!iOS) {
+                aspectRationProp = "aspectratio";
+            }
+            else
+            {
+                aspectRationProp = "aspectratioIOS";  
+            }
+
+            if (img.classList.contains(aspectRationProp)) return;
+            img.classList.add(aspectRationProp);*/
+        }
+        /**
+         * Remove aspect ratio class from image
+         * @author Elijah Blowes
+         */
+        function removeAspectRatio() {
+            img.classList.remove("aspectratio");
+
+            /*
+            if (img.classList.contains(aspectRationProp)) img.classList.remove(aspectRationProp);
+            if (img.classList.contains("width")) img.classList.remove("width");
+            if (img.classList.contains("height")) img.classList.remove("height");
+            */
+        }
+
+        //#endregion
+
+        //#region --- Event functions ---
+        // function to receive data from a local channel/scope
+        function receiveValue(eventData) {
+            setImage(eventData.value);
+        }
+
+        // getValue is a request for value
+        function getValue(eventData) {
+            // ... perform some kind of response to the data request
+        }
+
+        // sends the value held across local channel or to the server
+        function sendValue() {
+            // ...
+        }
+
+        // Set action on the event's data
+        function set(eventData) {
+            setVal(eventData);
+        }
+
+        // Adjust widget based on feed
+        function setVal(data) {
+            //....
+        }
+        //#endregion
+
+        //#region --- Widget API functions ---
+
+        // API startup actions for dashboard, initialises widget. Return "OK" if startup OK else return an error string. Don't delete
+        function fw_dashStart(mode) {
+            if (typeof fw.attribs("location") !== "undefined" && fw.attribs("location") !== "") {
+                imageLoc = fw.attribs("location");
+            }
+
+            if (typeof fw.attribs("3D shadow") !== "undefined" && fw.attribs("3D shadow") === "true") {
+                fw.widgetID.style.setProperty("box-shadow", "4px 4px 6px #cccccc");
+            } else {
+                fw.widgetID.style.setProperty("box-shadow", "none");
+            }
+            // console.log(fw.attribs("image"));
+            
+            if (mode !== "NORELOAD") {
+                // TODO more robust check
+                if (fw.attribs("image").includes(".mp4")) {
+                    setVideo(fw.attribs("image"));
+                } else {
+                    setImage(fw.attribs("image"));
+                }
+                
+            }
+            if (fw.attribs("maintain aspect ratio") === "false" || imageFullName === "/images/blank.png") {
+                removeAspectRatio();
+            } else {
+                addAspectRatio();
+            }
+
+            return "OK";
+        }
+
+        // API startup actions for toolbox. Return "OK" if startup OK else return an error string
+        function fw_toolStart(mode) {
+            setImage("", false);
+            fw.widgetID.style.setProperty("width", (parseInt(fw.widgetID.style.getPropertyValue("width")) - 2) + "px");
+            fw.widgetID.style.setProperty("height", (parseInt(fw.widgetID.style.getPropertyValue("height")) - 2) + "px");
+            return "OK"
+        }
+
+        // API startup actions when first created by dropping in design mode. Return "OK" if startup OK else return an error string
+        function fw_newWidget(mode) {
+            return fw_dashStart();
+        }
+
+        // API called when switching to design mode (optional, delete if not using)
+        function fw_startDesign() {
+            return true;
+        }
+
+        function fw_clicked() {
+            // check if jumpscreen is required
+            var jumpscreen_name = fw.attribs("jump to screen");
+                if (jumpscreen_name !== "" && fw.state === "DASHBOARD"){
+                    Client.jumpToScreen(jumpscreen_name);
+                }
+            if (fw.attribs("value clicked")) {
+                fw.fireEvent("clicked", fw.attribs("value clicked"));
+            }
+        }
+
+        // API called when a setting attribute is changed
+        function fw_designAction(func, data) {
+            switch (func.toUpperCase()) {
+                // We do server reload in addition to the local reload to ensure the image transferred successsfully
+                case "IMAGE_UPLOADED":
+                    var location = data.usrmeta.location;
+                    if (location.toUpperCase() !== "USERFILES" || "") {
+                        fw.func("SETATTRIBS", "location", location);
+                        setLocation(location);
+                    }
+                    fw.func("SETATTRIBS", "image", data.value);
+                    setImage(data.value + "?" + Math.random());
+                    //fw.func("CLEARDIRTY");
+                    break;
+                case "IMG_RELOAD":                                                          // Reload for a new image after server has processed.
+                    setImage("/userfiles/" + data + "?" + Math.random());                                   // Ensure file won't come from local browser cache
+                    break;
+                case "LOCAL_RELOAD":
+                    //eventImage({ value: data });
+                    
+                    img.src = data;                                                         // Reload from a local file (while in design)
+                    var imgSize = new Image();                                              // Get aspect ratio by loading an image dynamically (not part of the DOM)
+                    imgSize.onload = function () {
+                        fw.func("ADJUSTSIZE", "SCALEX", this.width / options.settings.iniWidth);   // Adjust widget collection for revised scale to suit aspect ratio & native image size
+                        fw.func("ADJUSTSIZE", "SCALEY", this.height / options.settings.iniHeight);
+                        fw.func("ADJUSTSIZE", "WIDTH", this.width);                         // Adjust dashboard object size
+                        fw.func("ADJUSTSIZE", "HEIGHT", this.height);
+                        fw_scale(this.width / options.settings.iniWidth, this.height / options.settings.iniHeight);                          // Adjust size of image in widget DOM
+                    }
+                    imgSize.src = data;
+                    
+                default:
+                    return false;
+            }
+        }
+
+        // API called to manage scaling
+        function fw_scale(scaleX, scaleY) {
+            fw.widgetID.style.setProperty("width", (options.settings.iniWidth * scaleX - 10) + "px");
+            fw.widgetID.style.setProperty("height", (options.settings.iniWidth * scaleY - 10) + "px");
+            var image = document.querySelector("img");
+            if (image) {
+                image.width = options.settings.iniWidth * scaleX - 10;
+                image.height = options.settings.iniHeight * scaleY - 10;
+            }
+            if (typeof fw === "undefined" || !("atrribs" in fw)) {
+                return;
+            }
+            if (fw.attribs("maintain aspect ratio") === "true") {
+                scaleAndCentre();
+            } else {
+                removeAspectRatio();
+            }
+        }
+
+        // API called when widget edit starts (return false to stop editor, "NOSCALE", "NOVERT", "NOHORIZ", "NOVERT,NOHORIZ" to customise scaling)
+        function fw_startEdit() {
+            return "";                            // Preserve image aspect ration
+        }
+
+        // API called when widget edit finishes (apply edit changes here)
+        function fw_endEdit(mode) {
+            fw.widgetID.style.setProperty("border", fw.attribs("border width") + "px solid #808080");
+
+            /*
+            // not sure the significance of this code, it seems to not reload the widget if the widget is saved and it is an image
+            if (mode !== "cancel") {
+                if (fw.attribs("image")) {
+                    fw_dashStart("NORELOAD");
+                } else {
+                    fw_dashStart(mode);
+                }
+            } else {
+                fw_dashStart(mode);
+            }
+            */
+
+            fw_dashStart(mode);
+
+            /*console.log(imageFullName);
+            //if (imageFullName === "/images/blank.png") {
+                removeAspectRatio();
+                console.log("set");
+            }*/
+
+            return true;
+        }
+
+        // API called for incoming channel events
+        function fw_feed(channel, client, data) {
+            var numeric = getInt(data.value, null);
+            setVal(numeric);
+            return true;
+        }
+
+        //Check if the device is IOS
+        function iOS() {
+            var result = fw.func("GETCONNECTIONOS", null);
+            return result;
+        }
+        // Initialize widget framework API - DO NOT ADJUST OR DELETE
+        var fw = new parent.widgetAPI(window.name);  // widget framework object
+        fw.ready();
+                //#endregion
+    </script>
+</body>
+</html>
