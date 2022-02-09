@@ -281,6 +281,8 @@
             // The pin is removed if another card is selected, or if the card is closed. See cardClosed event
 
             // if the pin is not null, then one has already been added, and needs to be removed first.  
+            // issue is when the temp pin is added, and then the trap is set, it causes it to be removed because the app
+            // thinks it is a deactivated trap. Have to reset the tempPinId when a trap is set.
              if (tempPinId != null) {
                 ClientEvents.publish('remove pin', tempPinId);
                 tempPinId = null;
@@ -288,10 +290,10 @@
              var state = event.value.state;
              var lat = parseFloat(event.value.lat);
              var lon = parseFloat(event.value.lon);
-             tempPinId = event.value.id.toLowerCase();
 
             // if the state is unassigned, temporarily add the pin
              if (state == 0) { 
+                tempPinId = event.value.id.toLowerCase();
                  if (!isNaN(lat) && !isNaN(lon)){
                     var popup = popupTemplate.cloneNode(true);
                     var pinPacket = {
@@ -954,6 +956,8 @@
       
      if (MODE === 'DESKTOP') {
          var pin = mapPins[event.value.id.toLowerCase()];
+         // want to reset the temporary pin so it doesn't think the newly set trap is still a temporary trap
+         tempPinId = null;
   
          // Pin may not exist.
          if (typeof pin !== 'undefined') {			
